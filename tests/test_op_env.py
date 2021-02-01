@@ -5,8 +5,10 @@
 import os
 import pytest
 import subprocess
+from unittest.mock import patch
 
 from op_env.cli import parse_argv
+from op_env.op import op_lookup
 
 
 @pytest.fixture
@@ -25,7 +27,19 @@ def test_content(response):
     # assert 'GitHub' in BeautifulSoup(response.content).title.string
 
 
-def test_parse_args_run_commadn_with_arguments_():
+def test_op_lookup():
+    with patch('op_env.op.subprocess') as mock_subprocess:
+        op_lookup('TEST_VALUE')
+        mock_Popen = mock_subprocess.Popen
+        mock_ps = mock_Popen.return_value
+        mock_Popen.assert_called_with(['op', 'list', 'items', '--tags', 'TEST_VALUE'],
+                                      stdout=mock_subprocess.PIPE)
+        mock_subprocess.check_output.\
+            assert_called_with(['op', 'get', 'item', '-', '--fields', 'password'],
+                               stdin=mock_ps.stdout)
+
+
+def test_parse_args_run_command_with_arguments():
     argv = ['op-env', 'run', '-e', 'DUMMY', 'mycmd', '1', '2', '3']
     args = parse_argv(argv)
     assert vars(args) == {'command': ['mycmd', '1', '2', '3'],
