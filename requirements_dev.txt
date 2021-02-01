@@ -1,0 +1,18 @@
+pip==20.3.1
+bumpversion==0.6.0
+wheel==0.36.2
+watchdog==1.0.1
+flake8==3.8.4
+tox==3.20.1
+coverage==5.3
+Sphinx==3.3.1
+twine==3.2.0
+
+pytest==6.2.2
+pytest-runner==5.1
+mypy==0.790
+# lxml is needed for mypy coverage reporting:
+#
+# You must install the lxml package before you can run mypy with `--html-report`.
+# You can do this with `python3 -m pip install lxml`.
+lxml==4.6.2

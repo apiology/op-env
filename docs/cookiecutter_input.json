@@ -1,0 +1,16 @@
+{
+    "_template": "https://github.com/apiology/cookiecutter-pypackage/",
+    "command_line_interface": "Argparse",
+    "create_author_file": "y",
+    "email": "vince@broz.cc",
+    "full_name": "Vince Broz",
+    "github_username": "apiology",
+    "open_source_license": "MIT license",
+    "project_name": "op-env",
+    "project_short_description": "op-env allows you to use OnePassword entries as environment variable-style secrets",
+    "project_slug": "op_env",
+    "pypi_username": "apiology",
+    "type_of_github_repo": "public",
+    "use_pytest": "y",
+    "version": "0.1.0"
+}
