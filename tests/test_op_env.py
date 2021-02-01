@@ -25,7 +25,7 @@ def test_content(response):
 
 
 def test_cli_help():
-    expected_help = b"""usage: op-env [-h] [_ ...]
+    expected_help = """usage: op-env [-h] [_ ...]
 
 positional arguments:
   _
@@ -33,5 +33,5 @@ positional arguments:
 optional arguments:
   -h, --help  show this help message and exit
 """
-    actual_help = subprocess.check_output(['op-env', '--help'])
+    actual_help = subprocess.check_output(['op-env', '--help']).decode('utf-8')
     assert expected_help == actual_help
