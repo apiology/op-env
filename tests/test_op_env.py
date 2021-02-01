@@ -2,10 +2,11 @@
 
 """Tests for `op_env` package."""
 
+import os
 import pytest
 import subprocess
 
-# from op_env import op_env
+from op_env.cli import parse_argv
 
 
 @pytest.fixture
@@ -24,16 +25,63 @@ def test_content(response):
     # assert 'GitHub' in BeautifulSoup(response.content).title.string
 
 
-def test_cli_help():
-    expected_help = """usage: op-env [-h] [_ ...]
+def test_parse_args_run_commadn_with_arguments_():
+    argv = ['op-env', 'run', '-e', 'DUMMY', 'mycmd', '1', '2', '3']
+    args = parse_argv(argv)
+    assert vars(args) == {'command': ['mycmd', '1', '2', '3'],
+                          'e': 'DUMMY',
+                          'subparser_name': 'run'}
+
+
+def test_parse_args_run_simple():
+    argv = ['op-env', 'run', '-e', 'DUMMY', 'mycmd']
+    args = parse_argv(argv)
+    assert vars(args) == {'command': ['mycmd'], 'e': 'DUMMY', 'subparser_name': 'run'}
+
+
+@pytest.mark.skip(reason="not yet written")
+def test_cli_run():
+    argv = ['op-env', 'run', '-e', 'DUMMY', 'env']
+    expected_envvar = 'DUMMY=dummyvalue'
+    actual_output = subprocess.check_output(argv).decode('utf-8')
+    assert expected_envvar in actual_output
+
+
+def test_cli_help_run():
+    expected_help = """usage: op-env run [-h] [-e ENVVAR] command [command ...]
 
 positional arguments:
-  _
+  command     Command to run with the environment set from 1Password
+
+optional arguments:
+  -h, --help  show this help message and exit
+  -e ENVVAR   environment variable name to set, based on item with same tag in 1Password
+"""
+    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
+    env = {}
+    env.update(os.environ)
+    env.update(request_long_lines)
+
+    # older python versions show arguments like this:
+    actual_help = subprocess.check_output(['op-env', 'run', '--help'], env=env).decode('utf-8')
+    assert actual_help == expected_help
+
+
+def test_cli_help():
+    expected_help = """usage: op-env [-h] {run} ...
+
+positional arguments:
+  {run}       Run the specified command with the given environment variables
 
 optional arguments:
   -h, --help  show this help message and exit
 """
+    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
+    env = {}
+    env.update(os.environ)
+    env.update(request_long_lines)
+
     # older python versions show arguments like this:
-    alt_expected_help = expected_help.replace('[_ ...]', '[_ [_ ...]]')
-    actual_help = subprocess.check_output(['op-env', '--help']).decode('utf-8')
-    assert actual_help in [expected_help, alt_expected_help]
+    actual_help = subprocess.check_output(['op-env', '--help'],
+                                          env=env).decode('utf-8')
+    assert actual_help == expected_help
