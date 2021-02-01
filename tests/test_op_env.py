@@ -23,10 +23,14 @@ def test_content(response):
     # from bs4 import BeautifulSoup
     # assert 'GitHub' in BeautifulSoup(response.content).title.string
 
+
 def test_parse_args_run_commadn_with_arguments_():
     argv = ['op-env', 'run', '-e', 'DUMMY', 'mycmd', '1', '2', '3']
     args = parse_argv(argv)
-    assert vars(args) == {'command': ['mycmd', '1', '2', '3'], 'e': 'DUMMY', 'subparser_name': 'run'}
+    assert vars(args) == {'command': ['mycmd', '1', '2', '3'],
+                          'e': 'DUMMY',
+                          'subparser_name': 'run'}
+
 
 def test_parse_args_run_simple():
     argv = ['op-env', 'run', '-e', 'DUMMY', 'mycmd']
@@ -57,6 +61,7 @@ optional arguments:
     # older python versions show arguments like this:
     actual_help = subprocess.check_output(['op-env', 'run', '--help']).decode('utf-8')
     assert actual_help == expected_help
+
 
 def test_cli_help():
     expected_help = """usage: op-env [-h] {run} ...
