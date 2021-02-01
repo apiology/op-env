@@ -33,5 +33,7 @@ positional arguments:
 optional arguments:
   -h, --help  show this help message and exit
 """
+    # older python versions show arguments like this:
+    alt_expected_help = expected_help.replace('[_ ...]', '[_ [_ ...]]')
     actual_help = subprocess.check_output(['op-env', '--help']).decode('utf-8')
-    assert expected_help == actual_help
+    assert actual_help in [expected_help, alt_expected_help]
