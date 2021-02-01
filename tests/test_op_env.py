@@ -3,7 +3,7 @@
 """Tests for `op_env` package."""
 
 import pytest
-
+import subprocess
 
 # from op_env import op_env
 
@@ -22,3 +22,18 @@ def test_content(response):
     """Sample pytest test function with the pytest fixture as an argument."""
     # from bs4 import BeautifulSoup
     # assert 'GitHub' in BeautifulSoup(response.content).title.string
+
+
+def test_cli_help():
+    expected_help = """usage: op-env [-h] [_ ...]
+
+positional arguments:
+  _
+
+optional arguments:
+  -h, --help  show this help message and exit
+"""
+    # older python versions show arguments like this:
+    alt_expected_help = expected_help.replace('[_ ...]', '[_ [_ ...]]')
+    actual_help = subprocess.check_output(['op-env', '--help']).decode('utf-8')
+    assert actual_help in [expected_help, alt_expected_help]
