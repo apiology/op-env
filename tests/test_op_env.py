@@ -2,6 +2,7 @@
 
 """Tests for `op_env` package."""
 
+import os
 import pytest
 import subprocess
 
@@ -50,16 +51,19 @@ def test_cli_help_run():
     expected_help = """usage: op-env run [-h] [-e ENVVAR] command [command ...]
 
 positional arguments:
-  command     Command to run with the environment set from
-              1Password
+  command     Command to run with the environment set from 1Password
 
 optional arguments:
   -h, --help  show this help message and exit
-  -e ENVVAR   environment variable name to set, based on item with
-              same tag in 1Password
+  -e ENVVAR   environment variable name to set, based on item with same tag in 1Password
 """
+    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
+    env = {}
+    env.update(os.environ)
+    env.update(request_long_lines)
+
     # older python versions show arguments like this:
-    actual_help = subprocess.check_output(['op-env', 'run', '--help']).decode('utf-8')
+    actual_help = subprocess.check_output(['op-env', 'run', '--help'], env=env).decode('utf-8')
     assert actual_help == expected_help
 
 
@@ -67,12 +71,17 @@ def test_cli_help():
     expected_help = """usage: op-env [-h] {run} ...
 
 positional arguments:
-  {run}       Run the specified command with the given environment
-              variables
+  {run}       Run the specified command with the given environment variables
 
 optional arguments:
   -h, --help  show this help message and exit
 """
+    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
+    env = {}
+    env.update(os.environ)
+    env.update(request_long_lines)
+
     # older python versions show arguments like this:
-    actual_help = subprocess.check_output(['op-env', '--help']).decode('utf-8')
+    actual_help = subprocess.check_output(['op-env', '--help'],
+                                          env=env).decode('utf-8')
     assert actual_help == expected_help
