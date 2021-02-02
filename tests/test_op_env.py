@@ -221,7 +221,7 @@ def test_parse_args_run_simple():
     assert args == {'command': ['mycmd'], 'environment': ['DUMMY'], 'operation': 'run'}
 
 
-@pytest.mark.skip(reason="not yet written")
+@pytest.mark.skip(reason="need to mock op binary in test PATH")
 def test_cli_run():
     argv = ['op-env', 'run', '-e', 'DUMMY', 'env']
     expected_envvar = 'DUMMY=dummyvalue'
