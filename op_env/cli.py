@@ -16,6 +16,7 @@ def parse_argv(argv: List[str]) -> Dict[str, str]:
     run_parser.add_argument('--environment', '-e',
                             metavar='ENVVAR',
                             action='append',
+                            default=[],
                             help='environment variable name to set, '
                             'based on item with same tag in 1Password')
     run_parser.add_argument('command',
