@@ -29,7 +29,11 @@ def name_inferred_fields(env_var_name: str) -> List[str]:
     components = env_var_name.split('_')
     if len(components) <= 1:
         return []
-    return [components[-1].lower()]
+    conversions = {
+        'user': 'username'
+    }
+    raw_value = components[-1].lower()
+    return [conversions.get(raw_value, raw_value)]
 
 
 def op_fields_to_try(env_var_name: str) -> List[str]:
