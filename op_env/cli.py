@@ -11,7 +11,8 @@ def parse_argv(argv: List[str]) -> Dict[str, str]:
 
     subparsers = parser.add_subparsers(help='Run the specified command '
                                        'with the given environment variables',
-                                       dest='subparser_name')
+                                       dest='operation')
+    subparsers.required = True
     run_parser = subparsers.add_parser('run')
     run_parser.add_argument('--environment', '-e',
                             metavar='ENVVAR',
@@ -25,7 +26,7 @@ def parse_argv(argv: List[str]) -> Dict[str, str]:
 
 
 def process_args(args: Dict[str, str]) -> int:
-    if args['subparser_name'] == 'run':
+    if args['operation'] == 'run':
         env: Dict[str, str] = {
             envvar: op_smart_lookup(envvar)
             for envvar in args['environment']
@@ -33,7 +34,7 @@ def process_args(args: Dict[str, str]) -> int:
         subprocess.check_call(args['command'], env=env)
         return 0
     else:
-        raise ValueError(f"Unknown subparser_name: {args['subparser_name']}")
+        raise ValueError(f"Unknown operation: {args['operation']}")
 
 
 def main(argv: List[str] = sys.argv) -> int:
