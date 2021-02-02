@@ -39,18 +39,26 @@ def test_op_lookup():
                                stdin=mock_ps.stdout)
 
 
+def test_parse_args_run_command_with_multiple_variables():
+    argv = ['op-env', 'run', '-e', 'DUMMY', '-e', 'DUMMY2', 'mycmd']
+    args = parse_argv(argv)
+    assert vars(args) == {'command': ['mycmd'],
+                          'e': ['DUMMY', 'DUMMY2'],
+                          'subparser_name': 'run'}
+
+
 def test_parse_args_run_command_with_arguments():
     argv = ['op-env', 'run', '-e', 'DUMMY', 'mycmd', '1', '2', '3']
     args = parse_argv(argv)
     assert vars(args) == {'command': ['mycmd', '1', '2', '3'],
-                          'e': 'DUMMY',
+                          'e': ['DUMMY'],
                           'subparser_name': 'run'}
 
 
 def test_parse_args_run_simple():
     argv = ['op-env', 'run', '-e', 'DUMMY', 'mycmd']
     args = parse_argv(argv)
-    assert vars(args) == {'command': ['mycmd'], 'e': 'DUMMY', 'subparser_name': 'run'}
+    assert vars(args) == {'command': ['mycmd'], 'e': ['DUMMY'], 'subparser_name': 'run'}
 
 
 @pytest.mark.skip(reason="not yet written")
