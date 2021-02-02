@@ -14,13 +14,22 @@ def op_smart_lookup(env_var_name: str) -> str:
     raise final_error
 
 
-def op_lookup(env_var_name: str, field_name: str = 'password') -> str:
-    # https://stackoverflow.com/questions/13332268/how-to-use-subprocess-command-with-pipes
+def op_list_items(env_var_name: str) -> bytes:
     list_command = ['op', 'list', 'items', '--tags', env_var_name]
     list_output = subprocess.check_output(list_command)
+    return list_output
+
+
+def op_get_item_fields(list_output: bytes, field_name: str = 'password') -> bytes:
     get_command = ['op', 'get', 'item', '-', '--fields', field_name]
-    output = subprocess.check_output(get_command, input=list_output)
-    return output.decode('utf-8').rstrip('\n')
+    return subprocess.check_output(get_command, input=list_output)
+
+
+def op_lookup(env_var_name: str, field_name: str = 'password') -> str:
+    # https://stackoverflow.com/questions/13332268/how-to-use-subprocess-command-with-pipes
+    list_output = op_list_items(env_var_name)
+    get_output = op_get_item_fields(list_output, field_name)
+    return get_output.decode('utf-8').rstrip('\n')
 
 
 def name_inferred_fields(env_var_name: str) -> List[str]:
