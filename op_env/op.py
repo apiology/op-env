@@ -1,5 +1,6 @@
 import subprocess
-from typing import List
+import json
+from typing import List, Any
 
 
 def op_smart_lookup(env_var_name: str) -> str:
@@ -14,10 +15,12 @@ def op_smart_lookup(env_var_name: str) -> str:
     raise final_error
 
 
-def op_list_items(env_var_name: str) -> bytes:
+def op_list_items(env_var_name: str) -> List[Any]:
     list_command = ['op', 'list', 'items', '--tags', env_var_name]
     list_output = subprocess.check_output(list_command)
-    return list_output
+    list_output_data = json.loads(list_output)
+    assert isinstance(list_output_data, list)
+    return list_output_data
 
 
 def op_get_item_fields(list_output: bytes, field_name: str = 'password') -> bytes:
@@ -27,7 +30,8 @@ def op_get_item_fields(list_output: bytes, field_name: str = 'password') -> byte
 
 def op_lookup(env_var_name: str, field_name: str = 'password') -> str:
     # https://stackoverflow.com/questions/13332268/how-to-use-subprocess-command-with-pipes
-    list_output = op_list_items(env_var_name)
+    list_output_data = op_list_items(env_var_name)
+    list_output = json.dumps(list_output_data).encode('utf-8')
     get_output = op_get_item_fields(list_output, field_name)
     return get_output.decode('utf-8').rstrip('\n')
 

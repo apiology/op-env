@@ -59,7 +59,7 @@ def test_fields_to_try_simple():
 
 def test_op_lookup_specific_field():
     with patch('op_env.op.subprocess') as mock_subprocess:
-        list_output = b"list_results"
+        list_output = b"[{}]"
         get_output = b"get_results\n"
         mock_subprocess.check_output.side_effect = [
             list_output,
