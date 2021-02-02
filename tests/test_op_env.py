@@ -8,7 +8,13 @@ import subprocess
 from unittest.mock import patch, call
 
 from op_env.cli import parse_argv, process_args
-from op_env.op import op_lookup, op_smart_lookup, op_fields_to_try, TooManyEntriesOPLookupError
+from op_env.op import (
+    op_lookup,
+    op_smart_lookup,
+    op_fields_to_try,
+    TooManyEntriesOPLookupError,
+    NoEntriesOPLookupError,
+)
 
 
 def test_process_args_runs_simple_command_with_simple_env():
@@ -57,12 +63,23 @@ def test_fields_to_try_simple():
         assert out == ['password']
 
 
+def test_op_lookup_too_few_entries():
+    with patch('op_env.op.subprocess') as mock_subprocess:
+        list_output = b"[]"
+        mock_subprocess.check_output.return_value = list_output
+        with pytest.raises(NoEntriesOPLookupError,
+                           match='No 1Password entries with tag ANY_TEST_VALUE found'):
+            op_lookup('ANY_TEST_VALUE', field_name='abc')
+        mock_subprocess.check_output.\
+            assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'])
+
+
 def test_op_lookup_too_many_entries():
     with patch('op_env.op.subprocess') as mock_subprocess:
         list_output = b"[{}, {}]"
         mock_subprocess.check_output.return_value = list_output
         with pytest.raises(TooManyEntriesOPLookupError,
-                           match='Too many entries with tag ANY_TEST_VALUE'):
+                           match='Too many 1Password entries with tag ANY_TEST_VALUE'):
             op_lookup('ANY_TEST_VALUE', field_name='abc')
         mock_subprocess.check_output.\
             assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'])
