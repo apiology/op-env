@@ -25,7 +25,7 @@ def main(argv=sys.argv):
     """Console script for op_env."""
     args = parse_argv(argv)
 
-    print("Arguments: " + str(args._))
+    print("Arguments: " + str(args))
     print("Replace this message by putting your code into "
           "op_env.cli.main")
     return 0
