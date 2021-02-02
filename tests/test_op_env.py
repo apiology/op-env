@@ -8,7 +8,7 @@ import subprocess
 from unittest.mock import patch
 
 from op_env.cli import parse_argv, process_args
-from op_env.op import op_lookup
+from op_env.op import op_lookup, op_smart_lookup
 
 
 def test_process_args_runs_simple_command_with_simple_env():
@@ -51,6 +51,13 @@ def test_op_lookup_specific_field():
             assert_called_with(['op', 'get', 'item', '-', '--fields', 'abc'],
                                stdin=mock_ps.stdout)
         assert out == "value"
+
+
+def test_op_smart_lookup():
+    with patch('op_env.op.op_lookup') as mock_op_lookup:
+        ret = op_smart_lookup('ENVVARNAME', field_name='field_name')
+        mock_op_lookup.assert_called_with('ENVVARNAME', field_name='field_name')
+        assert ret == mock_op_lookup.return_value
 
 
 def test_op_lookup():
