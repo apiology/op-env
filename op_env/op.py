@@ -2,8 +2,8 @@ import subprocess
 from typing import List
 
 
-def op_smart_lookup(env_var_name: str, field_name: str = 'password') -> str:
-    return op_lookup(env_var_name, field_name=field_name)
+def op_smart_lookup(env_var_name: str) -> str:
+    return op_lookup(env_var_name, field_name='password')
 
 
 def op_lookup(env_var_name: str, field_name: str = 'password') -> str:
