@@ -14,6 +14,7 @@ from op_env.op import (
     op_fields_to_try,
     TooManyEntriesOPLookupError,
     NoEntriesOPLookupError,
+    NoFieldValueOPLookupError,
 )
 
 
@@ -61,6 +62,24 @@ def test_fields_to_try_simple():
     with patch('op_env.op.subprocess'):  # for safety
         out = op_fields_to_try('ABC')
         assert out == ['password']
+
+
+def test_op_lookup_no_field_value():
+    with patch('op_env.op.subprocess') as mock_subprocess:
+        list_output = b"[{}]"
+        get_output = b"\n"
+        mock_subprocess.check_output.side_effect = [
+            list_output,
+            get_output,
+        ]
+        with pytest.raises(NoFieldValueOPLookupError,
+                           match=('1Passsword entry with tag '
+                                  'ANY_TEST_VALUE has no value for field abc')):
+            op_lookup('ANY_TEST_VALUE', field_name='abc')
+        mock_subprocess.check_output.\
+            assert_has_calls([call(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE']),
+                              call(['op', 'get', 'item', '-', '--fields', 'abc'],
+                                   input=list_output)])
 
 
 def test_op_lookup_too_few_entries():
@@ -116,11 +135,9 @@ def test_op_smart_lookup_multiple_fields_all_errors():
     with patch('op_env.op.op_lookup') as mock_op_lookup,\
          patch('op_env.op.op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle', 'blah']
-        mock_op_lookup.side_effect = [subprocess.CalledProcessError(returncode=123,
-                                                                    cmd='whatever'),
-                                      subprocess.CalledProcessError(returncode=123,
-                                                                    cmd='whatever')]
-        with pytest.raises(subprocess.CalledProcessError):
+        mock_op_lookup.side_effect = [NoFieldValueOPLookupError,
+                                      NoFieldValueOPLookupError]
+        with pytest.raises(NoFieldValueOPLookupError):
             op_smart_lookup('ENVVARNAME')
         mock_op_fields_to_try.assert_called_with('ENVVARNAME')
         mock_op_lookup.assert_has_calls([call('ENVVARNAME', field_name='floogle'),
@@ -131,9 +148,8 @@ def test_op_smart_lookup_single_field_with_error():
     with patch('op_env.op.op_lookup') as mock_op_lookup,\
          patch('op_env.op.op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle']
-        mock_op_lookup.side_effect = subprocess.CalledProcessError(returncode=123,
-                                                                   cmd='whatever')
-        with pytest.raises(subprocess.CalledProcessError):
+        mock_op_lookup.side_effect = NoFieldValueOPLookupError
+        with pytest.raises(NoFieldValueOPLookupError):
             op_smart_lookup('ENVVARNAME')
         mock_op_fields_to_try.assert_called_with('ENVVARNAME')
         mock_op_lookup.assert_called_with('ENVVARNAME', field_name='floogle')
@@ -143,8 +159,7 @@ def test_op_smart_lookup_multiple_fields_chooses_second():
     with patch('op_env.op.op_lookup') as mock_op_lookup,\
          patch('op_env.op.op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle', 'blah']
-        mock_op_lookup.side_effect = [subprocess.CalledProcessError(returncode=123,
-                                                                    cmd='whatever'),
+        mock_op_lookup.side_effect = [NoFieldValueOPLookupError,
                                       'result value']
         ret = op_smart_lookup('ENVVARNAME')
         mock_op_fields_to_try.assert_called_with('ENVVARNAME')
