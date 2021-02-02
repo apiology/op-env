@@ -1,4 +1,4 @@
-.PHONY: clean clean-test clean-pyc clean-build docs help quality
+.PHONY: clean clean-test clean-pyc clean-build docs help quality typecheck
 .DEFAULT_GOAL := default
 
 define BROWSER_PYSCRIPT
