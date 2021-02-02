@@ -196,7 +196,7 @@ def test_parse_args_run_command_no_env_variables():
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
                     'environment': [],
-                    'subparser_name': 'run'}
+                    'operation': 'run'}
 
 
 def test_parse_args_run_command_with_multiple_variables():
