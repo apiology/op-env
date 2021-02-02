@@ -70,6 +70,21 @@ def test_op_smart_lookup_multiple_fields():
         assert ret == 'result value'
 
 
+def test_op_smart_lookup_multiple_fields_all_errors():
+    with patch('op_env.op.op_lookup') as mock_op_lookup,\
+         patch('op_env.op.op_fields_to_try') as mock_op_fields_to_try:
+        mock_op_fields_to_try.return_value = ['floogle', 'blah']
+        mock_op_lookup.side_effect = [subprocess.CalledProcessError(returncode=123,
+                                                                    cmd='whatever'),
+                                      subprocess.CalledProcessError(returncode=123,
+                                                                    cmd='whatever')]
+        with pytest.raises(subprocess.CalledProcessError):
+            op_smart_lookup('ENVVARNAME')
+        mock_op_fields_to_try.assert_called_with('ENVVARNAME')
+        mock_op_lookup.assert_has_calls([call('ENVVARNAME', field_name='floogle'),
+                                         call('ENVVARNAME', field_name='blah')])
+
+
 def test_op_smart_lookup_single_field_with_error():
     with patch('op_env.op.op_lookup') as mock_op_lookup,\
          patch('op_env.op.op_fields_to_try') as mock_op_fields_to_try:
