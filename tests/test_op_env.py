@@ -39,6 +39,12 @@ def test_process_args_rejects_non_run():
             process_args(args)
 
 
+def test_fields_to_try_multiple_words():
+    with patch('op_env.op.subprocess'):  # for safety
+        out = op_fields_to_try('ABC_FLOOGLE')
+        assert out == ['floogle', 'password']
+
+
 def test_fields_to_try_simple():
     with patch('op_env.op.subprocess'):  # for safety
         out = op_fields_to_try('ABC')

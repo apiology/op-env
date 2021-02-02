@@ -25,5 +25,12 @@ def op_lookup(env_var_name: str, field_name: str = 'password') -> str:
     return output.decode('utf-8').rstrip('\n')
 
 
+def name_inferred_fields(env_var_name: str) -> List[str]:
+    components = env_var_name.split('_')
+    if len(components) <= 1:
+        return []
+    return [components[-1].lower()]
+
+
 def op_fields_to_try(env_var_name: str) -> List[str]:
-    return ['password']
+    return name_inferred_fields(env_var_name) + ['password']
