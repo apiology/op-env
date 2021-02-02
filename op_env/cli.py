@@ -10,7 +10,7 @@ def parse_argv(argv):
                                        'with the given environment variables',
                                        dest='subparser_name')
     run_parser = subparsers.add_parser('run')
-    run_parser.add_argument('-e',
+    run_parser.add_argument('--environment', '-e',
                             metavar='ENVVAR',
                             action='append',
                             help='environment variable name to set, '

@@ -23,11 +23,19 @@ def test_op_lookup():
                                stdin=mock_ps.stdout)
 
 
+def test_parse_args_run_command_with_long_env_variables():
+    argv = ['op-env', 'run', '-e', 'DUMMY', '--environment', 'DUMMY2', 'mycmd']
+    args = parse_argv(argv)
+    assert vars(args) == {'command': ['mycmd'],
+                          'environment': ['DUMMY', 'DUMMY2'],
+                          'subparser_name': 'run'}
+
+
 def test_parse_args_run_command_with_multiple_variables():
     argv = ['op-env', 'run', '-e', 'DUMMY', '-e', 'DUMMY2', 'mycmd']
     args = parse_argv(argv)
     assert vars(args) == {'command': ['mycmd'],
-                          'e': ['DUMMY', 'DUMMY2'],
+                          'environment': ['DUMMY', 'DUMMY2'],
                           'subparser_name': 'run'}
 
 
@@ -35,14 +43,14 @@ def test_parse_args_run_command_with_arguments():
     argv = ['op-env', 'run', '-e', 'DUMMY', 'mycmd', '1', '2', '3']
     args = parse_argv(argv)
     assert vars(args) == {'command': ['mycmd', '1', '2', '3'],
-                          'e': ['DUMMY'],
+                          'environment': ['DUMMY'],
                           'subparser_name': 'run'}
 
 
 def test_parse_args_run_simple():
     argv = ['op-env', 'run', '-e', 'DUMMY', 'mycmd']
     args = parse_argv(argv)
-    assert vars(args) == {'command': ['mycmd'], 'e': ['DUMMY'], 'subparser_name': 'run'}
+    assert vars(args) == {'command': ['mycmd'], 'environment': ['DUMMY'], 'subparser_name': 'run'}
 
 
 @pytest.mark.skip(reason="not yet written")
@@ -54,14 +62,15 @@ def test_cli_run():
 
 
 def test_cli_help_run():
-    expected_help = """usage: op-env run [-h] [-e ENVVAR] command [command ...]
+    expected_help = """usage: op-env run [-h] [--environment ENVVAR] command [command ...]
 
 positional arguments:
-  command     Command to run with the environment set from 1Password
+  command               Command to run with the environment set from 1Password
 
 optional arguments:
-  -h, --help  show this help message and exit
-  -e ENVVAR   environment variable name to set, based on item with same tag in 1Password
+  -h, --help            show this help message and exit
+  --environment ENVVAR, -e ENVVAR
+                        environment variable name to set, based on item with same tag in 1Password
 """
     request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
     env = {}
