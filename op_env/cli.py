@@ -3,7 +3,7 @@ import argparse
 import sys
 from typing import List, Dict
 import subprocess
-from .op import op_lookup
+from .op import op_smart_lookup
 
 
 def parse_argv(argv: List[str]) -> Dict[str, str]:
@@ -27,7 +27,7 @@ def parse_argv(argv: List[str]) -> Dict[str, str]:
 def process_args(args: Dict[str, str]) -> int:
     if args['subparser_name'] == 'run':
         env: Dict[str, str] = {
-            envvar: op_lookup(envvar)
+            envvar: op_smart_lookup(envvar)
             for envvar in args['environment']
         }
         subprocess.check_call(args['command'], env=env)

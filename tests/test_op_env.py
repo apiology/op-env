@@ -13,7 +13,7 @@ from op_env.op import op_lookup, op_smart_lookup, OPLookupError
 
 def test_process_args_runs_simple_command_with_simple_env():
     with patch('op_env.cli.subprocess') as mock_subprocess,\
-         patch('op_env.cli.op_lookup') as mock_op_lookup:
+         patch('op_env.cli.op_smart_lookup') as mock_op_lookup:
         command = ['env']
         args = {'subparser_name': 'run', 'command': command,
                 'environment': ['a']}
