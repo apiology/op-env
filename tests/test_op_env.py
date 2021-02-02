@@ -39,6 +39,20 @@ def test_process_args_rejects_non_run():
             process_args(args)
 
 
+def test_op_lookup_specific_field():
+    with patch('op_env.op.subprocess') as mock_subprocess:
+        mock_subprocess.check_output.return_value = b"value\n"
+        out = op_lookup('ANY_TEST_VALUE', field_name='abc')
+        mock_Popen = mock_subprocess.Popen
+        mock_ps = mock_Popen.return_value
+        mock_Popen.assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'],
+                                      stdout=mock_subprocess.PIPE)
+        mock_subprocess.check_output.\
+            assert_called_with(['op', 'get', 'item', '-', '--fields', 'abc'],
+                               stdin=mock_ps.stdout)
+        assert out == "value"
+
+
 def test_op_lookup():
     with patch('op_env.op.subprocess') as mock_subprocess:
         mock_subprocess.check_output.return_value = b"value\n"

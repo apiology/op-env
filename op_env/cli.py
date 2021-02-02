@@ -30,7 +30,6 @@ def process_args(args: Dict[str, str]) -> int:
             envvar: op_lookup(envvar)
             for envvar in args['environment']
         }
-        print(f'Running with env {env}')
         subprocess.check_call(args['command'], env=env)
         return 0
     else:
