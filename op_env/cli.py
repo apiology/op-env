@@ -12,6 +12,7 @@ def parse_argv(argv):
     run_parser = subparsers.add_parser('run')
     run_parser.add_argument('-e',
                             metavar='ENVVAR',
+                            action='append',
                             help='environment variable name to set, '
                             'based on item with same tag in 1Password')
     run_parser.add_argument('command',
