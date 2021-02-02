@@ -22,7 +22,7 @@ def test_process_args_runs_simple_command_with_simple_env():
     with patch('op_env.cli.subprocess') as mock_subprocess,\
          patch('op_env.cli.op_smart_lookup') as mock_op_lookup:
         command = ['env']
-        args = {'subparser_name': 'run', 'command': command,
+        args = {'operation': 'run', 'command': command,
                 'environment': ['a']}
         process_args(args)
         mock_op_lookup.assert_called_with('a')
@@ -33,7 +33,7 @@ def test_process_args_runs_simple_command_with_simple_env():
 def test_process_args_runs_simple_command():
     with patch('op_env.cli.subprocess') as mock_subprocess:
         command = ['env']
-        args = {'subparser_name': 'run', 'command': command,
+        args = {'operation': 'run', 'command': command,
                 'environment': []}
         process_args(args)
         mock_subprocess.check_call.assert_called_with(command, env={})
@@ -42,7 +42,7 @@ def test_process_args_runs_simple_command():
 def test_process_args_rejects_non_run():
     with patch('op_env.op.subprocess'):  # for safety
         with pytest.raises(ValueError):
-            args = {'subparser_name': 'definitely-not-run'}
+            args = {'operation': 'definitely-not-run'}
             process_args(args)
 
 
@@ -188,7 +188,7 @@ def test_parse_args_run_command_with_long_env_variables():
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
                     'environment': ['DUMMY', 'DUMMY2'],
-                    'subparser_name': 'run'}
+                    'operation': 'run'}
 
 
 def test_parse_args_run_command_with_multiple_variables():
@@ -196,7 +196,7 @@ def test_parse_args_run_command_with_multiple_variables():
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
                     'environment': ['DUMMY', 'DUMMY2'],
-                    'subparser_name': 'run'}
+                    'operation': 'run'}
 
 
 def test_parse_args_run_command_with_arguments():
@@ -204,13 +204,13 @@ def test_parse_args_run_command_with_arguments():
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['DUMMY'],
-                    'subparser_name': 'run'}
+                    'operation': 'run'}
 
 
 def test_parse_args_run_simple():
     argv = ['op-env', 'run', '-e', 'DUMMY', 'mycmd']
     args = parse_argv(argv)
-    assert args == {'command': ['mycmd'], 'environment': ['DUMMY'], 'subparser_name': 'run'}
+    assert args == {'command': ['mycmd'], 'environment': ['DUMMY'], 'operation': 'run'}
 
 
 @pytest.mark.skip(reason="not yet written")
@@ -240,6 +240,23 @@ optional arguments:
     # older python versions show arguments like this:
     actual_help = subprocess.check_output(['op-env', 'run', '--help'], env=env).decode('utf-8')
     assert actual_help == expected_help
+
+
+def test_cli_no_args():
+    expected_help = """usage: op-env [-h] {run} ...
+op-env: error: the following arguments are required: operation
+"""
+    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
+    env = {}
+    env.update(os.environ)
+    env.update(request_long_lines)
+
+    # older python versions show arguments like this:
+    completed_process = subprocess.run(['op-env'], env=env,
+                                       stderr=subprocess.PIPE)
+    actual_help = completed_process.stderr.decode('utf-8')
+    assert actual_help == expected_help
+    assert completed_process.returncode == 2
 
 
 def test_cli_help():
