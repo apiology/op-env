@@ -9,4 +9,4 @@ def op_lookup(env_var_name: str) -> str:
     get_command = ['op', 'get', 'item', '-', '--fields', 'password']
     output = subprocess.check_output(get_command, stdin=pipe.stdout)
     pipe.wait()
-    return output.decode('utf-8')
+    return output.decode('utf-8').rstrip('\n')
