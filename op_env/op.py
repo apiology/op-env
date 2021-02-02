@@ -3,7 +3,8 @@ from typing import List
 
 
 def op_smart_lookup(env_var_name: str) -> str:
-    return op_lookup(env_var_name, field_name='password')
+    fields = op_fields_to_try(env_var_name)
+    return op_lookup(env_var_name, field_name=fields[0])
 
 
 def op_lookup(env_var_name: str, field_name: str = 'password') -> str:

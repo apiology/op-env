@@ -60,9 +60,12 @@ def test_op_lookup_specific_field():
 
 
 def test_op_smart_lookup():
-    with patch('op_env.op.op_lookup') as mock_op_lookup:
+    with patch('op_env.op.op_lookup') as mock_op_lookup,\
+         patch('op_env.op.op_fields_to_try') as mock_op_fields_to_try:
+        mock_op_fields_to_try.return_value = ['floogle']
         ret = op_smart_lookup('ENVVARNAME')
-        mock_op_lookup.assert_called_with('ENVVARNAME', field_name='password')
+        mock_op_fields_to_try.assert_called_with('ENVVARNAME')
+        mock_op_lookup.assert_called_with('ENVVARNAME', field_name='floogle')
         assert ret == mock_op_lookup.return_value
 
 
