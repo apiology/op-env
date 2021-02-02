@@ -3,6 +3,14 @@ import json
 from typing import List, Any
 
 
+class OPLookupError(LookupError):
+    pass
+
+
+class TooManyEntriesOPLookupError(OPLookupError):
+    pass
+
+
 def op_smart_lookup(env_var_name: str) -> str:
     fields = op_fields_to_try(env_var_name)
     final_error = None
@@ -20,6 +28,8 @@ def op_list_items(env_var_name: str) -> List[Any]:
     list_output = subprocess.check_output(list_command)
     list_output_data = json.loads(list_output)
     assert isinstance(list_output_data, list)
+    if len(list_output_data) > 1:
+        raise TooManyEntriesOPLookupError(f"Too many entries with tag {env_var_name}")
     return list_output_data
 
 
