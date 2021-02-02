@@ -59,16 +59,18 @@ def test_fields_to_try_simple():
 
 def test_op_lookup_specific_field():
     with patch('op_env.op.subprocess') as mock_subprocess:
-        mock_subprocess.check_output.return_value = b"value\n"
+        list_output = b"list_results"
+        get_output = b"get_results\n"
+        mock_subprocess.check_output.side_effect = [
+            list_output,
+            get_output,
+        ]
         out = op_lookup('ANY_TEST_VALUE', field_name='abc')
-        mock_Popen = mock_subprocess.Popen
-        mock_ps = mock_Popen.return_value
-        mock_Popen.assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'],
-                                      stdout=mock_subprocess.PIPE)
         mock_subprocess.check_output.\
-            assert_called_with(['op', 'get', 'item', '-', '--fields', 'abc'],
-                               stdin=mock_ps.stdout)
-        assert out == "value"
+            assert_has_calls([call(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE']),
+                              call(['op', 'get', 'item', '-', '--fields', 'abc'],
+                                   input=list_output)])
+        assert out == "get_results"
 
 
 def test_op_smart_lookup_multiple_fields():
@@ -131,20 +133,6 @@ def test_op_smart_lookup_chooses_first():
         mock_op_fields_to_try.assert_called_with('ENVVARNAME')
         mock_op_lookup.assert_called_with('ENVVARNAME', field_name='floogle')
         assert ret == mock_op_lookup.return_value
-
-
-def test_op_lookup():
-    with patch('op_env.op.subprocess') as mock_subprocess:
-        mock_subprocess.check_output.return_value = b"value\n"
-        out = op_lookup('ANY_TEST_VALUE')
-        mock_Popen = mock_subprocess.Popen
-        mock_ps = mock_Popen.return_value
-        mock_Popen.assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'],
-                                      stdout=mock_subprocess.PIPE)
-        mock_subprocess.check_output.\
-            assert_called_with(['op', 'get', 'item', '-', '--fields', 'password'],
-                               stdin=mock_ps.stdout)
-        assert out == "value"
 
 
 def test_parse_args_run_command_with_long_env_variables():
