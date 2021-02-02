@@ -4,7 +4,14 @@ from typing import List
 
 def op_smart_lookup(env_var_name: str) -> str:
     fields = op_fields_to_try(env_var_name)
-    return op_lookup(env_var_name, field_name=fields[0])
+    final_error = None
+    for field in fields:
+        try:
+            return op_lookup(env_var_name, field_name=field)
+        except subprocess.CalledProcessError as e:
+            final_error = e
+    assert final_error is not None
+    raise final_error
 
 
 def op_lookup(env_var_name: str, field_name: str = 'password') -> str:
