@@ -1,4 +1,5 @@
 import subprocess
+from typing import List
 
 
 def op_smart_lookup(env_var_name: str, field_name: str = 'password') -> str:
@@ -14,3 +15,7 @@ def op_lookup(env_var_name: str, field_name: str = 'password') -> str:
     output = subprocess.check_output(get_command, stdin=pipe.stdout)
     pipe.wait()
     return output.decode('utf-8').rstrip('\n')
+
+
+def op_fields_to_try(env_var_name: str) -> List[str]:
+    return ['password']

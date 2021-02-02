@@ -8,7 +8,7 @@ import subprocess
 from unittest.mock import patch
 
 from op_env.cli import parse_argv, process_args
-from op_env.op import op_lookup, op_smart_lookup
+from op_env.op import op_lookup, op_smart_lookup, op_fields_to_try
 
 
 def test_process_args_runs_simple_command_with_simple_env():
@@ -37,6 +37,12 @@ def test_process_args_rejects_non_run():
         with pytest.raises(ValueError):
             args = {'subparser_name': 'definitely-not-run'}
             process_args(args)
+
+
+def test_fields_to_try_simple():
+    with patch('op_env.op.subprocess'):  # for safety
+        out = op_fields_to_try('ABC')
+        assert out == ['password']
 
 
 def test_op_lookup_specific_field():
