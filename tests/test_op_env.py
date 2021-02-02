@@ -242,6 +242,21 @@ optional arguments:
     assert actual_help == expected_help
 
 
+def test_cli_no_args():
+    expected_help = """usage: op-env [-h] {run} ...
+op-env: error: the following arguments are required: operation
+"""
+    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
+    env = {}
+    env.update(os.environ)
+    env.update(request_long_lines)
+
+    # older python versions show arguments like this:
+    actual_help = subprocess.check_output(['op-env'],
+                                          env=env).decode('utf-8')
+    assert actual_help == expected_help
+
+
 def test_cli_help():
     expected_help = """usage: op-env [-h] {run} ...
 
