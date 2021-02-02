@@ -252,9 +252,11 @@ op-env: error: the following arguments are required: operation
     env.update(request_long_lines)
 
     # older python versions show arguments like this:
-    actual_help = subprocess.check_output(['op-env'],
-                                          env=env).decode('utf-8')
+    completed_process = subprocess.run(['op-env'], env=env,
+                                       capture_output=True)
+    actual_help = completed_process.stderr.decode('utf-8')
     assert actual_help == expected_help
+    assert completed_process.returncode == 2
 
 
 def test_cli_help():
