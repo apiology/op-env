@@ -5,15 +5,15 @@
 import os
 import pytest
 import subprocess
-from unittest.mock import patch
+from unittest.mock import patch, call
 
 from op_env.cli import parse_argv, process_args
-from op_env.op import op_lookup
+from op_env.op import op_lookup, op_smart_lookup, op_fields_to_try
 
 
 def test_process_args_runs_simple_command_with_simple_env():
     with patch('op_env.cli.subprocess') as mock_subprocess,\
-         patch('op_env.cli.op_lookup') as mock_op_lookup:
+         patch('op_env.cli.op_smart_lookup') as mock_op_lookup:
         command = ['env']
         args = {'subparser_name': 'run', 'command': command,
                 'environment': ['a']}
@@ -37,6 +37,94 @@ def test_process_args_rejects_non_run():
         with pytest.raises(ValueError):
             args = {'subparser_name': 'definitely-not-run'}
             process_args(args)
+
+
+def test_fields_to_try_multiple_words():
+    with patch('op_env.op.subprocess'):  # for safety
+        out = op_fields_to_try('ABC_FLOOGLE')
+        assert out == ['floogle', 'password']
+
+
+def test_fields_to_try_simple():
+    with patch('op_env.op.subprocess'):  # for safety
+        out = op_fields_to_try('ABC')
+        assert out == ['password']
+
+
+def test_op_lookup_specific_field():
+    with patch('op_env.op.subprocess') as mock_subprocess:
+        mock_subprocess.check_output.return_value = b"value\n"
+        out = op_lookup('ANY_TEST_VALUE', field_name='abc')
+        mock_Popen = mock_subprocess.Popen
+        mock_ps = mock_Popen.return_value
+        mock_Popen.assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'],
+                                      stdout=mock_subprocess.PIPE)
+        mock_subprocess.check_output.\
+            assert_called_with(['op', 'get', 'item', '-', '--fields', 'abc'],
+                               stdin=mock_ps.stdout)
+        assert out == "value"
+
+
+def test_op_smart_lookup_multiple_fields():
+    with patch('op_env.op.op_lookup') as mock_op_lookup,\
+         patch('op_env.op.op_fields_to_try') as mock_op_fields_to_try:
+        mock_op_fields_to_try.return_value = ['floogle', 'blah']
+        mock_op_lookup.return_value = 'result value'
+        ret = op_smart_lookup('ENVVARNAME')
+        mock_op_fields_to_try.assert_called_with('ENVVARNAME')
+        mock_op_lookup.assert_called_with('ENVVARNAME', field_name='floogle')
+        assert ret == 'result value'
+
+
+def test_op_smart_lookup_multiple_fields_all_errors():
+    with patch('op_env.op.op_lookup') as mock_op_lookup,\
+         patch('op_env.op.op_fields_to_try') as mock_op_fields_to_try:
+        mock_op_fields_to_try.return_value = ['floogle', 'blah']
+        mock_op_lookup.side_effect = [subprocess.CalledProcessError(returncode=123,
+                                                                    cmd='whatever'),
+                                      subprocess.CalledProcessError(returncode=123,
+                                                                    cmd='whatever')]
+        with pytest.raises(subprocess.CalledProcessError):
+            op_smart_lookup('ENVVARNAME')
+        mock_op_fields_to_try.assert_called_with('ENVVARNAME')
+        mock_op_lookup.assert_has_calls([call('ENVVARNAME', field_name='floogle'),
+                                         call('ENVVARNAME', field_name='blah')])
+
+
+def test_op_smart_lookup_single_field_with_error():
+    with patch('op_env.op.op_lookup') as mock_op_lookup,\
+         patch('op_env.op.op_fields_to_try') as mock_op_fields_to_try:
+        mock_op_fields_to_try.return_value = ['floogle']
+        mock_op_lookup.side_effect = subprocess.CalledProcessError(returncode=123,
+                                                                   cmd='whatever')
+        with pytest.raises(subprocess.CalledProcessError):
+            op_smart_lookup('ENVVARNAME')
+        mock_op_fields_to_try.assert_called_with('ENVVARNAME')
+        mock_op_lookup.assert_called_with('ENVVARNAME', field_name='floogle')
+
+
+def test_op_smart_lookup_multiple_fields_chooses_second():
+    with patch('op_env.op.op_lookup') as mock_op_lookup,\
+         patch('op_env.op.op_fields_to_try') as mock_op_fields_to_try:
+        mock_op_fields_to_try.return_value = ['floogle', 'blah']
+        mock_op_lookup.side_effect = [subprocess.CalledProcessError(returncode=123,
+                                                                    cmd='whatever'),
+                                      'result value']
+        ret = op_smart_lookup('ENVVARNAME')
+        mock_op_fields_to_try.assert_called_with('ENVVARNAME')
+        mock_op_lookup.assert_has_calls([call('ENVVARNAME', field_name='floogle'),
+                                         call('ENVVARNAME', field_name='blah')])
+        assert ret == 'result value'
+
+
+def test_op_smart_lookup_chooses_first():
+    with patch('op_env.op.op_lookup') as mock_op_lookup,\
+         patch('op_env.op.op_fields_to_try') as mock_op_fields_to_try:
+        mock_op_fields_to_try.return_value = ['floogle']
+        ret = op_smart_lookup('ENVVARNAME')
+        mock_op_fields_to_try.assert_called_with('ENVVARNAME')
+        mock_op_lookup.assert_called_with('ENVVARNAME', field_name='floogle')
+        assert ret == mock_op_lookup.return_value
 
 
 def test_op_lookup():
