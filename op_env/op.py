@@ -1,16 +1,8 @@
 import subprocess
 
 
-class OPLookupError(LookupError):
-    pass
-
-
 def op_smart_lookup(env_var_name: str, field_name: str = 'password') -> str:
-    ret = op_lookup(env_var_name, field_name=field_name)
-    if ret is None:
-        raise OPLookupError()
-
-    return ret
+    return op_lookup(env_var_name, field_name=field_name)
 
 
 def op_lookup(env_var_name: str, field_name: str = 'password') -> str:
