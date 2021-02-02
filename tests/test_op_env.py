@@ -253,7 +253,7 @@ op-env: error: the following arguments are required: operation
 
     # older python versions show arguments like this:
     completed_process = subprocess.run(['op-env'], env=env,
-                                       capture_output=True)
+                                       stderr=subprocess.PIPE)
     actual_help = completed_process.stderr.decode('utf-8')
     assert actual_help == expected_help
     assert completed_process.returncode == 2
