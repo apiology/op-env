@@ -137,7 +137,12 @@ def test_op_smart_lookup_multiple_fields_all_errors():
         mock_op_fields_to_try.return_value = ['floogle', 'blah']
         mock_op_lookup.side_effect = [NoFieldValueOPLookupError,
                                       NoFieldValueOPLookupError]
-        with pytest.raises(NoFieldValueOPLookupError):
+        with pytest.raises(NoFieldValueOPLookupError,
+                           match=('1Passsword entry with tag '
+                                  'ENVVARNAME has no value for '
+                                  'the fields tried: '
+                                  "floogle, blah.  Please populate "
+                                  'one of these fields in 1Password.')):
             op_smart_lookup('ENVVARNAME')
         mock_op_fields_to_try.assert_called_with('ENVVARNAME')
         mock_op_lookup.assert_has_calls([call('ENVVARNAME', field_name='floogle'),

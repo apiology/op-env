@@ -21,14 +21,16 @@ class NoFieldValueOPLookupError(OPLookupError):
 
 def op_smart_lookup(env_var_name: str) -> str:
     fields = op_fields_to_try(env_var_name)
-    final_error = None
     for field in fields:
         try:
             return op_lookup(env_var_name, field_name=field)
-        except NoFieldValueOPLookupError as e:
-            final_error = e
-    assert final_error is not None
-    raise final_error
+        except NoFieldValueOPLookupError:
+            pass
+    raise NoFieldValueOPLookupError('1Passsword entry with tag '
+                                    f'{env_var_name} has no value for '
+                                    'the fields tried: '
+                                    f'{", ".join(fields)}.  Please populate '
+                                    'one of these fields in 1Password.')
 
 
 def op_list_items(env_var_name: str) -> List[Any]:
