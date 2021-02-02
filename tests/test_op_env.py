@@ -41,7 +41,8 @@ def test_process_args_rejects_non_run():
 
 def test_op_lookup():
     with patch('op_env.op.subprocess') as mock_subprocess:
-        op_lookup('ANY_TEST_VALUE')
+        mock_subprocess.check_output.return_value = b"value\n"
+        out = op_lookup('ANY_TEST_VALUE')
         mock_Popen = mock_subprocess.Popen
         mock_ps = mock_Popen.return_value
         mock_Popen.assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'],
@@ -49,6 +50,7 @@ def test_op_lookup():
         mock_subprocess.check_output.\
             assert_called_with(['op', 'get', 'item', '-', '--fields', 'password'],
                                stdin=mock_ps.stdout)
+        assert out == "value"
 
 
 def test_parse_args_run_command_with_long_env_variables():
