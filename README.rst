@@ -30,7 +30,7 @@ Q&A
 **How do I install op-env?**
 
 1. You'll first need to install and configure the `"op" CLI from 1Password <https://support.1password.com/command-line-getting-started/>`_.  I personally use ``brew install 1password-cli`` for that.
-2. To make using that a little less painful, I wrote  `with-op <(https://github.com/apiology/with_op>`_, which will stash your op temporary key in your system's keychain so you don't need to fiddle around with your environment.  Your choice, though!  Install using pip.  ``python3 -m pip install with_op``
+2. To make using that a little less painful, I wrote  `with-op`_, which will stash your op temporary key in your system's keychain so you don't need to fiddle around with your environment.  Your choice, though!  Install using pip.  ``python3 -m pip install with_op``
 3. Install using pip.  ``python3 -m pip install op_env``
 
 **How do I run it?**
@@ -69,7 +69,7 @@ Some pointers to things that might be helpful:
 
 1. `db-facts <https://github.com/bluelabs/db-facts>`_ specializes on setting database information, and integrates well with LastPass (but not yet 1Password).  I wrote this.
 2. `op <https://support.1password.com/command-line-getting-started/>`_ is a CLI tool for interacting with 1Password.  It's pretty good, but requires you stash a temporary token in your environment.
-3. `with-op <https://github.com/apiology/with_op>`_ helps by stashing that token in your system keychain so you don't need to create wacky shell aliases or whatever.  I wrote this.
+3. `with-op`_ helps by stashing that token in your system keychain so you don't need to create wacky shell aliases or whatever.  I wrote this.
 4. `lastpass-cli <https://github.com/lastpass/lastpass-cli>`_ is a CLI tool for interacting with LastPass.  It is cruddy and not well-maintained, but it's what's available and is the basis for LastPass support in db-facts.
 
 Credits
@@ -79,3 +79,4 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+.. _`with-op`: https://github.com/apiology/with_op
