@@ -23,6 +23,7 @@ PreCommit:
     on_warn: fail
   RstLint:
     enabled: true
+    on_warn: fail
 #  RuboCop:
 #    enabled: true
 #    on_warn: fail # Treat all warnings as failures
