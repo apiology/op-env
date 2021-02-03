@@ -188,7 +188,7 @@ def test_op_smart_lookup_chooses_first():
         assert ret == mock_op_lookup.return_value
 
 
-def test_parse_args_run_command_with_long_env_variables():
+def test_parse_args_run_operation_with_long_env_variables():
     argv = ['op-env', 'run', '-e', 'DUMMY', '--environment', 'DUMMY2', 'mycmd']
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
@@ -196,7 +196,7 @@ def test_parse_args_run_command_with_long_env_variables():
                     'operation': 'run'}
 
 
-def test_parse_args_run_command_no_env_variables():
+def test_parse_args_run_operation_no_env_variables():
     argv = ['op-env', 'run', 'mycmd']
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
@@ -204,7 +204,7 @@ def test_parse_args_run_command_no_env_variables():
                     'operation': 'run'}
 
 
-def test_parse_args_run_command_with_multiple_variables():
+def test_parse_args_run_operation_with_multiple_variables():
     argv = ['op-env', 'run', '-e', 'DUMMY', '-e', 'DUMMY2', 'mycmd']
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
@@ -212,7 +212,7 @@ def test_parse_args_run_command_with_multiple_variables():
                     'operation': 'run'}
 
 
-def test_parse_args_run_command_with_arguments():
+def test_parse_args_run_operation_with_arguments():
     argv = ['op-env', 'run', '-e', 'DUMMY', 'mycmd', '1', '2', '3']
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
