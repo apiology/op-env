@@ -30,7 +30,7 @@ Q&A
 **How do I install op-env?**
 
 1. You'll first need to install and configure the `"op" CLI from 1Password <https://support.1password.com/command-line-getting-started/>`_.  I personally use ``brew install 1password-cli`` for that.
-2. To make using that a little less painful, I wrote  `with-op <(https://github.com/apiology/with_op>`_, which will stash your op temporary key in your system's keychain so you don't need to fiddle around with your environment.  Your choice, though!  Install using pip.  ``python3 -m pip install with_op``
+2. To make using that a little less painful, I wrote  `with-op`_, which will stash your op temporary key in your system's keychain so you don't need to fiddle around with your environment.  Your choice, though!  Install using pip.  ``python3 -m pip install with_op``
 3. Install using pip.  ``python3 -m pip install op_env``
 
 **How do I run it?**
@@ -79,3 +79,4 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+.. _`with-op`: https://github.com/apiology/with_op
