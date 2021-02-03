@@ -256,7 +256,7 @@ optional arguments:
 
 
 def test_cli_no_args():
-    expected_help = """usage: op-env [-h] {run} ...
+    expected_help = """usage: op-env [-h] {run,json} ...
 op-env: error: the following arguments are required: operation
 """
     request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
@@ -273,10 +273,12 @@ op-env: error: the following arguments are required: operation
 
 
 def test_cli_help():
-    expected_help = """usage: op-env [-h] {run} ...
+    expected_help = """usage: op-env [-h] {run,json} ...
 
 positional arguments:
-  {run}       Run the specified command with the given environment variables
+  {run,json}
+    run       Run the specified command with the given environment variables
+    json      Produce simple JSON on stdout mapping requested env variables to values
 
 optional arguments:
   -h, --help  show this help message and exit

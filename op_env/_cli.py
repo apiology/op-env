@@ -10,11 +10,11 @@ from .op import op_smart_lookup
 def parse_argv(argv: List[str]) -> Dict[str, str]:
     parser = argparse.ArgumentParser()
 
-    subparsers = parser.add_subparsers(help='Run the specified command '
-                                       'with the given environment variables',
-                                       dest='operation')
+    subparsers = parser.add_subparsers(dest='operation')
     subparsers.required = True
-    run_parser = subparsers.add_parser('run')
+    run_parser = subparsers.add_parser('run',
+                                       help='Run the specified command '
+                                       'with the given environment variables')
     run_parser.add_argument('--environment', '-e',
                             metavar='ENVVAR',
                             action='append',
@@ -24,6 +24,10 @@ def parse_argv(argv: List[str]) -> Dict[str, str]:
     run_parser.add_argument('command',
                             nargs='+',
                             help='Command to run with the environment set from 1Password')
+    # json_parser =
+    subparsers.add_parser('json',
+                          help='Produce simple JSON on stdout '
+                          'mapping requested env variables to values')
     return vars(parser.parse_args(argv[1:]))
 
 
