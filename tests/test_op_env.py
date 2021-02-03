@@ -188,6 +188,13 @@ def test_op_smart_lookup_chooses_first():
         assert ret == mock_op_lookup.return_value
 
 
+def test_parse_args_json_operation_no_env_variables():
+    argv = ['op-env', 'json']
+    args = parse_argv(argv)
+    assert args == {'environment': [],
+                    'operation': 'json'}
+
+
 def test_parse_args_run_operation_with_long_env_variables():
     argv = ['op-env', 'run', '-e', 'DUMMY', '--environment', 'DUMMY2', 'mycmd']
     args = parse_argv(argv)
@@ -252,6 +259,24 @@ optional arguments:
 
     # older python versions show arguments like this:
     actual_help = subprocess.check_output(['op-env', 'run', '--help'], env=env).decode('utf-8')
+    assert actual_help == expected_help
+
+
+def test_cli_help_json():
+    expected_help = """usage: op-env json [-h] [--environment ENVVAR]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --environment ENVVAR, -e ENVVAR
+                        environment variable name to set, based on item with same tag in 1Password
+"""
+    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
+    env = {}
+    env.update(os.environ)
+    env.update(request_long_lines)
+
+    # older python versions show arguments like this:
+    actual_help = subprocess.check_output(['op-env', 'json', '--help'], env=env).decode('utf-8')
     assert actual_help == expected_help
 
 

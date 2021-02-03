@@ -28,10 +28,10 @@ def parse_argv(argv: List[str]) -> Dict[str, str]:
     run_parser.add_argument('command',
                             nargs='+',
                             help='Command to run with the environment set from 1Password')
-    # json_parser =
-    subparsers.add_parser('json',
-                          help='Produce simple JSON on stdout '
-                          'mapping requested env variables to values')
+    json_parser = subparsers.add_parser('json',
+                                        help='Produce simple JSON on stdout '
+                                        'mapping requested env variables to values')
+    add_environment_argument(json_parser)
     return vars(parser.parse_args(argv[1:]))
 
 
