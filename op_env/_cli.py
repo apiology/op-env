@@ -7,6 +7,15 @@ import os
 from .op import op_smart_lookup
 
 
+def add_environment_argument(arg_parser: argparse.ArgumentParser):
+    arg_parser.add_argument('--environment', '-e',
+                            metavar='ENVVAR',
+                            action='append',
+                            default=[],
+                            help='environment variable name to set, '
+                            'based on item with same tag in 1Password')
+
+
 def parse_argv(argv: List[str]) -> Dict[str, str]:
     parser = argparse.ArgumentParser()
 
@@ -15,12 +24,7 @@ def parse_argv(argv: List[str]) -> Dict[str, str]:
     run_parser = subparsers.add_parser('run',
                                        help='Run the specified command '
                                        'with the given environment variables')
-    run_parser.add_argument('--environment', '-e',
-                            metavar='ENVVAR',
-                            action='append',
-                            default=[],
-                            help='environment variable name to set, '
-                            'based on item with same tag in 1Password')
+    add_environment_argument(run_parser)
     run_parser.add_argument('command',
                             nargs='+',
                             help='Command to run with the environment set from 1Password')
