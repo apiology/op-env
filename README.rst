@@ -29,19 +29,19 @@ Q&A
 
 **How do I install op-env?**
 
-1. You'll first need to install and configure the `"op" CLI from 1Password <https://support.1password.com/command-line-getting-started/>`_.  I personally use `brew install 1password-cli` for that.
-2. To make using that a little less painful, I wrote  `with-op <(https://github.com/apiology/with_op>`_, which will stash your op temporary key in your system's keychain so you don't need to fiddle around with your environment.  Your choice, though!  Install using `pip`.  `python3 -m pip install with_op`
-3. Install using `pip`.  `python3 -m pip install op_env`
+1. You'll first need to install and configure the `"op" CLI from 1Password <https://support.1password.com/command-line-getting-started/>`_.  I personally use ``brew install 1password-cli`` for that.
+2. To make using that a little less painful, I wrote  `with-op <(https://github.com/apiology/with_op>`_, which will stash your op temporary key in your system's keychain so you don't need to fiddle around with your environment.  Your choice, though!  Install using ``pip``.  ``python3 -m pip install with_op``
+3. Install using ``pip``.  ``python3 -m pip install op_env``
 
 **How do I run it?**
 
-Let's say you have a web server you're running locally named `web-server`.  Let's pass in environment variables pointing to the database it should connect to.
+Let's say you have a web server you're running locally named ``web-server``.  Let's pass in environment variables pointing to the database it should connect to.
 
 1. Find or create your 1Password entry.  Make sure the server, port, username and password are there, with those strings as the keys in the 1Password entry (this lines up with the 'Server' category if you want to use that!)
 
-2. Edit the entry and add tags for the env variable that your web server uses.  Let's say they're called `WEB_DB_SERVER`, `WEB_DB_PORT`, `WEB_DB_USERNAME`, `WEB_DB_PASSWORD` - so add four tags.
+2. Edit the entry and add tags for the env variable that your web server uses.  Let's say they're called ``WEB_DB_SERVER``, ``WEB_DB_PORT``, ``WEB_DB_USERNAME``, ``WEB_DB_PASSWORD`` - so add four tags.
 
-3. Run your server with `with-op op-env run -e WEB_DB_SERVER -e WEB_DB_PORT -e WEB_DB_USERNAME -e WEB_DB_PASSWORD web-server`
+3. Run your server with ``with-op op-env run -e WEB_DB_SERVER -e WEB_DB_PORT -e WEB_DB_USERNAME -e WEB_DB_PASSWORD web-server``
 
 4. Smile with the smug satisfaction of someone who doesn't have yet another password hanging around in a text file on disk.
 
@@ -53,7 +53,7 @@ If you'd like to PR this and add a feature to add a mapping somewhere, file an i
 
 **What if I have more than one environment?**
 
-In the future I could imagine having some new flag that down-selects by requiring a certain tag (e.g., `web-server-prod`) or perhaps vault be applied to the 1Password entry to downselect to the right set of entries.  File an issue if you're interested in taking this on!
+In the future I could imagine having some new flag that down-selects by requiring a certain tag (e.g., ``web-server-prod``) or perhaps vault be applied to the 1Password entry to downselect to the right set of entries.  File an issue if you're interested in taking this on!
 
 Which field does op-env read?  Can I pull a username, password, servername and port from 1Password?
 
@@ -61,7 +61,7 @@ This isn't quite the problem I'm facing.  Are there other things out there that 
 
 **I want something like this, but as something which populates Heroku/Kubernetes/etc.**
 
-That's not a question.  But yeah, I'd definitely imagine these as an extension here - something like `op-env k8s -e WEB_DB_SERVER` that creates a secret.  Another approach would be to create a JSON export mode so you can write tools around this to do these things.  File an issue if you want to take this on!
+That's not a question.  But yeah, I'd definitely imagine these as an extension here - something like ``op-env k8s -e WEB_DB_SERVER`` that creates a secret.  Another approach would be to create a JSON export mode so you can write tools around this to do these things.  File an issue if you want to take this on!
 
 **Some pointers to things that might be helpful:**
 
