@@ -1,5 +1,6 @@
 """Console script for op_env."""
 import argparse
+import json
 import sys
 from typing import List, Dict, TypedDict
 import subprocess
@@ -54,6 +55,10 @@ def process_args(args: Arguments) -> int:
         new_env = do_smart_lookups(args['environment'])
         copied_env.update(new_env)
         subprocess.check_call(args['command'], env=copied_env)
+        return 0
+    elif args['operation'] == 'json':
+        new_env = do_smart_lookups(args['environment'])
+        print(json.dumps(new_env))
         return 0
     else:
         raise ValueError(f"Unknown operation: {args['operation']}")

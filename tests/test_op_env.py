@@ -2,6 +2,7 @@
 
 """Tests for `op_env` package."""
 
+import io
 import os
 import pytest
 import subprocess
@@ -16,6 +17,16 @@ from op_env.op import (
     NoEntriesOPLookupError,
     NoFieldValueOPLookupError,
 )
+
+
+def test_process_args_shows_json_with_simple_env():
+    with patch('op_env._cli.op_smart_lookup') as mock_op_lookup,\
+         patch('sys.stdout', new_callable=io.StringIO) as stdout_stringio:
+        args = {'operation': 'json', 'environment': ['a']}
+        mock_op_lookup.return_value = "1"
+        process_args(args)
+        assert stdout_stringio.getvalue(), '{"a": "1"}'
+        mock_op_lookup.assert_called_with('a')
 
 
 def test_process_args_runs_simple_command_with_simple_env():
