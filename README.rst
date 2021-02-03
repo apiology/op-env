@@ -45,6 +45,10 @@ Let's say you have a web server you're running locally named ``web-server``.  Le
 
 4. Smile with the smug satisfaction of someone who doesn't have yet another password hanging around in a text file on disk.
 
+**Which field does op-env read?  Can I pull a username, password, servername and port from 1Password?**
+
+op-env uses the name of the env variable to infer which field in the entry should be used - e.g., 'server' for ``WEB_DB_SERVER``.  It tries to handle common synonyms (more welcome in PRs!) like 'user' for 'username'.  If all else fails it'll pull the 'password' field.
+
 **What if the env variable naming doesn't line up with the field in 1Passsword?**
 
 Right now your best bet is to either duplicate the field in 1Password with the new name, rename the field in 1Password, or rename the env variable.
@@ -55,15 +59,13 @@ If you'd like to PR this and add a feature to add a mapping somewhere, file an i
 
 In the future I could imagine having some new flag that down-selects by requiring a certain tag (e.g., ``web-server-prod``) or perhaps vault be applied to the 1Password entry to downselect to the right set of entries.  File an issue if you're interested in taking this on!
 
-Which field does op-env read?  Can I pull a username, password, servername and port from 1Password?
-
-This isn't quite the problem I'm facing.  Are there other things out there that are related I should know about?
-
 **I want something like this, but as something which populates Heroku/Kubernetes/etc.**
 
 That's not a question.  But yeah, I'd definitely imagine these as an extension here - something like ``op-env k8s -e WEB_DB_SERVER`` that creates a secret.  Another approach would be to create a JSON export mode so you can write tools around this to do these things.  File an issue if you want to take this on!
 
-**Some pointers to things that might be helpful:**
+**This isn't quite the problem I'm facing.  Are there other things out there that are related I should know about?**
+
+Some pointers to things that might be helpful:
 
 1. `db-facts <https://github.com/bluelabs/db-facts>`_ specializes on setting database information, and integrates well with LastPass (but not yet 1Password).  I wrote this.
 2. `op <https://support.1password.com/command-line-getting-started/>`_ is a CLI tool for interacting with 1Password.  It's pretty good, but requires you stash a temporary token in your environment.
