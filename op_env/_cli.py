@@ -1,10 +1,16 @@
 """Console script for op_env."""
 import argparse
 import sys
-from typing import List, Dict
+from typing import List, Dict, TypedDict
 import subprocess
 import os
 from .op import op_smart_lookup
+
+
+class Arguments(TypedDict):
+    operation: str
+    environment: List[str]
+    command: List[str]
 
 
 def add_environment_argument(arg_parser: argparse.ArgumentParser):
@@ -16,7 +22,7 @@ def add_environment_argument(arg_parser: argparse.ArgumentParser):
                             'based on item with same tag in 1Password')
 
 
-def parse_argv(argv: List[str]) -> Dict[str, str]:
+def parse_argv(argv: List[str]) -> Arguments:
     parser = argparse.ArgumentParser()
 
     subparsers = parser.add_subparsers(dest='operation')
@@ -32,16 +38,20 @@ def parse_argv(argv: List[str]) -> Dict[str, str]:
                                         help='Produce simple JSON on stdout '
                                         'mapping requested env variables to values')
     add_environment_argument(json_parser)
-    return vars(parser.parse_args(argv[1:]))
+    return vars(parser.parse_args(argv[1:]))  # type: ignore
 
 
-def process_args(args: Dict[str, str]) -> int:
+def do_smart_lookups(envvars: List[str]) -> Dict[str, str]:
+    return {
+        envvar: op_smart_lookup(envvar)
+        for envvar in envvars
+    }
+
+
+def process_args(args: Arguments) -> int:
     if args['operation'] == 'run':
         copied_env = dict(os.environ)
-        new_env: Dict[str, str] = {
-            envvar: op_smart_lookup(envvar)
-            for envvar in args['environment']
-        }
+        new_env = do_smart_lookups(args['environment'])
         copied_env.update(new_env)
         subprocess.check_call(args['command'], env=copied_env)
         return 0
