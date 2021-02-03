@@ -3,6 +3,7 @@ import argparse
 import sys
 from typing import List, Dict
 import subprocess
+import os
 from .op import op_smart_lookup
 
 
@@ -28,11 +29,13 @@ def parse_argv(argv: List[str]) -> Dict[str, str]:
 
 def process_args(args: Dict[str, str]) -> int:
     if args['operation'] == 'run':
-        env: Dict[str, str] = {
+        copied_env = dict(os.environ)
+        new_env: Dict[str, str] = {
             envvar: op_smart_lookup(envvar)
             for envvar in args['environment']
         }
-        subprocess.check_call(args['command'], env=env)
+        copied_env.update(new_env)
+        subprocess.check_call(args['command'], env=copied_env)
         return 0
     else:
         raise ValueError(f"Unknown operation: {args['operation']}")
