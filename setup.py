@@ -97,7 +97,7 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
     ],
-    description="op-env allows you to use OnePassword entries as environment variable-style secrets",  # noqa: E501
+    description="op-env allows you to use 1Password entries as environment variable-style secrets",  # noqa: E501
     entry_points={
         'console_scripts': [
             'op-env=op_env._cli:main',

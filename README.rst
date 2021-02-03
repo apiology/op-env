@@ -20,7 +20,7 @@ op-env
 Features
 --------
 
-op-env allows you to use OnePassword entries as environment variable-style secrets.  This makes it easier to rotate secrets in places where the source of truth is 1Password.
+op-env allows you to use 1Password entries as environment variable-style secrets.  This makes it easier to rotate secrets in places where the source of truth is 1Password.
 
 You can use op-env by setting your desired environment variable name as a tag in the 1Password entry that you want to use.
 
