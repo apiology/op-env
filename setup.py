@@ -18,7 +18,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements: List[str] = []
+requirements: List[str] = ['typing_extensions']
 
 setup_requirements: List[str] = ['pytest-runner']
 
@@ -116,7 +116,7 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/apiology/op_env',
-    version='0.1.1',
+    version='0.2.0',
     zip_safe=False,
     cmdclass={
         'quality': QualityCommand,

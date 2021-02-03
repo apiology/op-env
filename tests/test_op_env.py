@@ -2,6 +2,7 @@
 
 """Tests for `op_env` package."""
 
+import io
 import os
 import pytest
 import subprocess
@@ -16,6 +17,16 @@ from op_env.op import (
     NoEntriesOPLookupError,
     NoFieldValueOPLookupError,
 )
+
+
+def test_process_args_shows_json_with_simple_env():
+    with patch('op_env._cli.op_smart_lookup') as mock_op_lookup,\
+         patch('sys.stdout', new_callable=io.StringIO) as stdout_stringio:
+        args = {'operation': 'json', 'environment': ['a']}
+        mock_op_lookup.return_value = "1"
+        process_args(args)
+        assert stdout_stringio.getvalue(), '{"a": "1"}'
+        mock_op_lookup.assert_called_with('a')
 
 
 def test_process_args_runs_simple_command_with_simple_env():
@@ -188,7 +199,14 @@ def test_op_smart_lookup_chooses_first():
         assert ret == mock_op_lookup.return_value
 
 
-def test_parse_args_run_command_with_long_env_variables():
+def test_parse_args_json_operation_no_env_variables():
+    argv = ['op-env', 'json']
+    args = parse_argv(argv)
+    assert args == {'environment': [],
+                    'operation': 'json'}
+
+
+def test_parse_args_run_operation_with_long_env_variables():
     argv = ['op-env', 'run', '-e', 'DUMMY', '--environment', 'DUMMY2', 'mycmd']
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
@@ -196,7 +214,7 @@ def test_parse_args_run_command_with_long_env_variables():
                     'operation': 'run'}
 
 
-def test_parse_args_run_command_no_env_variables():
+def test_parse_args_run_operation_no_env_variables():
     argv = ['op-env', 'run', 'mycmd']
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
@@ -204,7 +222,7 @@ def test_parse_args_run_command_no_env_variables():
                     'operation': 'run'}
 
 
-def test_parse_args_run_command_with_multiple_variables():
+def test_parse_args_run_operation_with_multiple_variables():
     argv = ['op-env', 'run', '-e', 'DUMMY', '-e', 'DUMMY2', 'mycmd']
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
@@ -212,7 +230,7 @@ def test_parse_args_run_command_with_multiple_variables():
                     'operation': 'run'}
 
 
-def test_parse_args_run_command_with_arguments():
+def test_parse_args_run_operation_with_arguments():
     argv = ['op-env', 'run', '-e', 'DUMMY', 'mycmd', '1', '2', '3']
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
@@ -255,8 +273,26 @@ optional arguments:
     assert actual_help == expected_help
 
 
+def test_cli_help_json():
+    expected_help = """usage: op-env json [-h] [--environment ENVVAR]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --environment ENVVAR, -e ENVVAR
+                        environment variable name to set, based on item with same tag in 1Password
+"""
+    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
+    env = {}
+    env.update(os.environ)
+    env.update(request_long_lines)
+
+    # older python versions show arguments like this:
+    actual_help = subprocess.check_output(['op-env', 'json', '--help'], env=env).decode('utf-8')
+    assert actual_help == expected_help
+
+
 def test_cli_no_args():
-    expected_help = """usage: op-env [-h] {run} ...
+    expected_help = """usage: op-env [-h] {run,json} ...
 op-env: error: the following arguments are required: operation
 """
     request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
@@ -273,10 +309,12 @@ op-env: error: the following arguments are required: operation
 
 
 def test_cli_help():
-    expected_help = """usage: op-env [-h] {run} ...
+    expected_help = """usage: op-env [-h] {run,json} ...
 
 positional arguments:
-  {run}       Run the specified command with the given environment variables
+  {run,json}
+    run       Run the specified command with the given environment variables
+    json      Produce simple JSON on stdout mapping requested env variables to values
 
 optional arguments:
   -h, --help  show this help message and exit

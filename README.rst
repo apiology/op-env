@@ -61,7 +61,9 @@ In the future I could imagine having some new flag that down-selects by requirin
 
 **I want something like this, but as something which populates Heroku/Kubernetes/etc.**
 
-That's not a question.  But yeah, I'd definitely imagine these as an extension here - something like ``op-env k8s -e WEB_DB_SERVER`` that creates a secret.  Another approach would be to create a JSON export mode so you can write tools around this to do these things.  File an issue if you want to take this on!
+That's not a question.  But yeah, I'd definitely imagine these as an extension here - something like ``op-env k8s -e WEB_DB_SERVER`` that creates a secret.
+
+For now, you can use ``op-env json -e WEB_DB_SERVER`` and write a script to process the JSON that it puts out on stdout into what you need.  For that matter, you could write a script (maybe an ERB/jinja template?) that pastes in env variables and run it with ``op-env run``.
 
 **This isn't quite the problem I'm facing.  Are there other things out there that are related I should know about?**
 
