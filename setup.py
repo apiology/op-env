@@ -100,7 +100,7 @@ setup(
     description="op-env allows you to use OnePassword entries as environment variable-style secrets",  # noqa: E501
     entry_points={
         'console_scripts': [
-            'op-env=op_env.cli:main',
+            'op-env=op_env._cli:main',
         ],
     },
     install_requires=requirements,

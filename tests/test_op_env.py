@@ -7,11 +7,11 @@ import pytest
 import subprocess
 from unittest.mock import patch, call
 
-from op_env.cli import parse_argv, process_args
+from op_env._cli import parse_argv, process_args
 from op_env.op import (
     op_lookup,
     op_smart_lookup,
-    op_fields_to_try,
+    _op_fields_to_try,
     TooManyEntriesOPLookupError,
     NoEntriesOPLookupError,
     NoFieldValueOPLookupError,
@@ -19,8 +19,8 @@ from op_env.op import (
 
 
 def test_process_args_runs_simple_command_with_simple_env():
-    with patch('op_env.cli.subprocess') as mock_subprocess,\
-         patch('op_env.cli.op_smart_lookup') as mock_op_lookup:
+    with patch('op_env._cli.subprocess') as mock_subprocess,\
+         patch('op_env._cli.op_smart_lookup') as mock_op_lookup:
         command = ['env']
         args = {'operation': 'run', 'command': command,
                 'environment': ['a']}
@@ -31,7 +31,7 @@ def test_process_args_runs_simple_command_with_simple_env():
 
 
 def test_process_args_runs_simple_command():
-    with patch('op_env.cli.subprocess') as mock_subprocess:
+    with patch('op_env._cli.subprocess') as mock_subprocess:
         command = ['env']
         args = {'operation': 'run', 'command': command,
                 'environment': []}
@@ -48,19 +48,19 @@ def test_process_args_rejects_non_run():
 
 def test_fields_to_try_conversion_username():
     with patch('op_env.op.subprocess'):  # for safety
-        out = op_fields_to_try('ABC_USER')
+        out = _op_fields_to_try('ABC_USER')
         assert out == ['username', 'password']
 
 
 def test_fields_to_try_multiple_words():
     with patch('op_env.op.subprocess'):  # for safety
-        out = op_fields_to_try('ABC_FLOOGLE')
+        out = _op_fields_to_try('ABC_FLOOGLE')
         assert out == ['floogle', 'password']
 
 
 def test_fields_to_try_simple():
     with patch('op_env.op.subprocess'):  # for safety
-        out = op_fields_to_try('ABC')
+        out = _op_fields_to_try('ABC')
         assert out == ['password']
 
 
@@ -122,7 +122,7 @@ def test_op_lookup_specific_field():
 
 def test_op_smart_lookup_multiple_fields():
     with patch('op_env.op.op_lookup') as mock_op_lookup,\
-         patch('op_env.op.op_fields_to_try') as mock_op_fields_to_try:
+         patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle', 'blah']
         mock_op_lookup.return_value = 'result value'
         ret = op_smart_lookup('ENVVARNAME')
@@ -133,7 +133,7 @@ def test_op_smart_lookup_multiple_fields():
 
 def test_op_smart_lookup_multiple_fields_all_errors():
     with patch('op_env.op.op_lookup') as mock_op_lookup,\
-         patch('op_env.op.op_fields_to_try') as mock_op_fields_to_try:
+         patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle', 'blah']
         mock_op_lookup.side_effect = [NoFieldValueOPLookupError,
                                       NoFieldValueOPLookupError]
@@ -151,7 +151,7 @@ def test_op_smart_lookup_multiple_fields_all_errors():
 
 def test_op_smart_lookup_single_field_with_error():
     with patch('op_env.op.op_lookup') as mock_op_lookup,\
-         patch('op_env.op.op_fields_to_try') as mock_op_fields_to_try:
+         patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle']
         mock_op_lookup.side_effect = NoFieldValueOPLookupError
         with pytest.raises(NoFieldValueOPLookupError):
@@ -162,7 +162,7 @@ def test_op_smart_lookup_single_field_with_error():
 
 def test_op_smart_lookup_multiple_fields_chooses_second():
     with patch('op_env.op.op_lookup') as mock_op_lookup,\
-         patch('op_env.op.op_fields_to_try') as mock_op_fields_to_try:
+         patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle', 'blah']
         mock_op_lookup.side_effect = [NoFieldValueOPLookupError,
                                       'result value']
@@ -175,7 +175,7 @@ def test_op_smart_lookup_multiple_fields_chooses_second():
 
 def test_op_smart_lookup_chooses_first():
     with patch('op_env.op.op_lookup') as mock_op_lookup,\
-         patch('op_env.op.op_fields_to_try') as mock_op_fields_to_try:
+         patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle']
         ret = op_smart_lookup('ENVVARNAME')
         mock_op_fields_to_try.assert_called_with('ENVVARNAME')
