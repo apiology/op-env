@@ -2,7 +2,8 @@
 import argparse
 import json
 import sys
-from typing import List, Dict, TypedDict
+from typing import List, Dict
+from typing_extensions import TypedDict
 import subprocess
 import os
 from .op import op_smart_lookup
