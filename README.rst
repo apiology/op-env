@@ -98,10 +98,11 @@ Or perhaps even create a Rake task like this:
 
 Some pointers to things that might be helpful:
 
-1. `db-facts <https://github.com/bluelabs/db-facts>`_ specializes on setting database information, and integrates well with LastPass (but not yet 1Password).  I wrote this.
-2. `op <https://support.1password.com/command-line-getting-started/>`_ is a CLI tool for interacting with 1Password.  It's pretty good, but requires you stash a temporary token in your environment.
-3. `with-op`_ helps by stashing that token in your system keychain so you don't need to create wacky shell aliases or whatever.  I wrote this.
-4. `lastpass-cli <https://github.com/lastpass/lastpass-cli>`_ is a CLI tool for interacting with LastPass.  It is cruddy and not well-maintained, but it's what's available and is the basis for LastPass support in db-facts.
+1. `ope <https://github.com/stumyp/ope>`_ sets environment variables based on a configuration file in your home directory, and predates this tool by a few years. I didn't know about it when I wrote ``op-env``.   It lets you point to a selected 1Password entry which has all of the env variables you need, and lets you run in a similar way to ``op-env``.  My take is that it'll be easier to see all your related secrets in one place, but you may have to duplicate some things if you have an existing 1Password structure you need to keep (the tag concept in op-env is designed to keep your 1Password secrets DRY).
+2. `db-facts <https://github.com/bluelabs/db-facts>`_ specializes on setting database information, and integrates well with LastPass (but not yet 1Password).  I wrote this.
+3. `op <https://support.1password.com/command-line-getting-started/>`_ is a CLI tool for interacting with 1Password.  It's pretty good, but requires you stash a temporary token in your environment.
+4. `with-op`_ helps by stashing that token in your system keychain so you don't need to create wacky shell aliases or whatever.  I wrote this.
+5. `lastpass-cli <https://github.com/lastpass/lastpass-cli>`_ is a CLI tool for interacting with LastPass.  It is cruddy and not well-maintained, but it's what's available and is the basis for LastPass support in db-facts.
 
 Credits
 -------
