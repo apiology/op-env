@@ -89,7 +89,7 @@ Or perhaps even create a Rake task like this:
    task :populate_heroku do
      vars_and_values = pull_vars_and_values
      vars_and_values.each do |var, value|
-       sh 'heroku', 'config:set', '--app', 'rails-vld', "#{var}=#{value}"
+       sh 'heroku', 'config:set', '--app', 'my-app', "#{var}=#{value}"
      end
    end
 
