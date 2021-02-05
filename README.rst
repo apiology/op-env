@@ -63,7 +63,11 @@ In the future I could imagine having some new flag that down-selects by requirin
 
 That's not a question.  But yeah, I'd definitely imagine these as an extension here - something like ``op-env k8s -e WEB_DB_SERVER`` that creates a secret.
 
-For now, you can use ``op-env json -e WEB_DB_SERVER`` and write a script to process the JSON that it puts out on stdout into what you need.  For that matter, you could write a script (maybe an ERB/jinja template?) that pastes in env variables and run it with ``op-env run``.
+For now, you can use ``op-env json -e WEB_DB_SERVER`` and write a script to process the JSON that it puts out on stdout into what you need.  For that matter, you could write a script (maybe an ERB/jinja template?) that pastes in env variables and run it with ``op-env run``.  Or you could use the `jq <https://stedolan.github.io/jq/>`_ tool to manipulate the results like this:
+
+```sh
+with-op op-env json -e WEB_DB_SERVER | jq -r 'to_entries | map("heroku config:set --app my-app " + .key + "=" + .value) | join("\n")' | sh
+```
 
 **This isn't quite the problem I'm facing.  Are there other things out there that are related I should know about?**
 
