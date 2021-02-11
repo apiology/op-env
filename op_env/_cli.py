@@ -32,6 +32,9 @@ class AppendListFromYAMLAction(argparse.Action):
             if not isinstance(variables_from_yaml, list):
                 raise argparse.ArgumentTypeError('YAML file must be a list; '
                                                  f'found {variables_from_yaml}')
+            if not all([isinstance(item, str) for item in variables_from_yaml]):
+                raise argparse.ArgumentTypeError('YAML file must contain a list of strings; '
+                                                 f'found {variables_from_yaml}')
         envvars = getattr(namespace, self.dest)
         envvars.extend(variables_from_yaml)
 

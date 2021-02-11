@@ -23,6 +23,15 @@ from op_env.op import (
 
 
 @pytest.fixture
+def list_of_number_yaml_file():
+    with tempfile.NamedTemporaryFile(mode="w+t") as yaml_file:
+        contents = [123, 456]
+        yaml.dump(contents, yaml_file)
+        yaml_file.flush()
+        yield yaml_file.name
+
+
+@pytest.fixture
 def number_yaml_file():
     with tempfile.NamedTemporaryFile(mode="w+t") as yaml_file:
         contents = 123
@@ -317,6 +326,13 @@ def test_parse_args_run_operation_with_yaml_arguments_and_environment_arguments(
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['VAR0', 'VAR1', 'VAR2'],
                     'operation': 'run'}
+
+
+def test_list_of_numbers_yaml_argument(list_of_number_yaml_file):
+    argv = ['op-env', 'run', '-y', list_of_number_yaml_file, 'mycmd', '1', '2', '3']
+    with pytest.raises(argparse.ArgumentTypeError,
+                       match='YAML file must contain a list of strings'):
+        parse_argv(argv)
 
 
 def test_parse_args_run_operation_with_number_file_yaml_argument(number_yaml_file):
