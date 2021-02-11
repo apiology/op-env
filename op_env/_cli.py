@@ -2,7 +2,7 @@
 import argparse
 import json
 import sys
-from typing import List, Dict
+from typing import List, Dict, Optional, Any, Union, Sequence
 from typing_extensions import TypedDict
 import subprocess
 import os
@@ -16,9 +16,13 @@ class Arguments(TypedDict):
     command: List[str]
 
 
-# TODO: Add typing
 class AppendListFromYAMLAction(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self,
+                 parser: argparse.ArgumentParser,
+                 namespace: argparse.Namespace,
+                 values: Union[str, Sequence[Any], None],
+                 option_string: Optional[str] = None):
+        assert isinstance(values, str)
         with open(values, 'r') as stream:
             variables_from_yaml = yaml.safe_load(stream)
         envvars = getattr(namespace, self.dest)
