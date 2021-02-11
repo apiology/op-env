@@ -22,6 +22,15 @@ from op_env.op import (
 
 
 @pytest.fixture
+def one_item_yaml_file():
+    with tempfile.NamedTemporaryFile(mode="w+t") as yaml_file:
+        contents = ['VARA']
+        yaml.dump(contents, yaml_file)
+        yaml_file.flush()
+        yield yaml_file.name
+
+
+@pytest.fixture
 def two_item_yaml_file():
     with tempfile.NamedTemporaryFile(mode="w+t") as yaml_file:
         contents = ['VAR1', 'VAR2']
@@ -249,14 +258,23 @@ def test_parse_args_run_operation_with_environment_arguments():
                     'operation': 'run'}
 
 
-@pytest.mark.skip(reason="under development")
-def test_parse_args_run_operation_with_multiple_yaml_and_environment_arguments(two_item_yaml_file):
-    assert False
+def test_parse_args_run_operation_with_multiple_yaml_and_environment_arguments(one_item_yaml_file,
+                                                                               two_item_yaml_file):
+    argv = ['op-env', 'run', '-e', 'VAR_1', '-e', 'VAR0',
+            '-y', two_item_yaml_file, '-y', one_item_yaml_file,
+            'mycmd', '1', '2', '3']
+    args = parse_argv(argv)
+    assert args == {'command': ['mycmd', '1', '2', '3'],
+                    'environment': ['VAR_1', 'VAR0', 'VAR1', 'VAR2', 'VARA'],
+                    'operation': 'run'}
 
 
-@pytest.mark.skip(reason="under development")
 def test_parse_args_run_operation_with_yaml_arguments_and_environment_arguments(two_item_yaml_file):
-    assert False
+    argv = ['op-env', 'run', '-e', 'VAR0', '-y', two_item_yaml_file, 'mycmd', '1', '2', '3']
+    args = parse_argv(argv)
+    assert args == {'command': ['mycmd', '1', '2', '3'],
+                    'environment': ['VAR0', 'VAR1', 'VAR2'],
+                    'operation': 'run'}
 
 
 def test_parse_args_run_operation_with_yaml_arguments(two_item_yaml_file):
