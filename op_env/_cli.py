@@ -22,8 +22,9 @@ class AppendListFromYAMLAction(argparse.Action):
                  namespace: argparse.Namespace,
                  values: Union[str, Sequence[Any], None],
                  option_string: Optional[str] = None):
-        assert isinstance(values, str)
-        with open(values, 'r') as stream:
+        assert isinstance(values, str)  # should be validated already by argparse
+        filename = values
+        with open(filename, 'r') as stream:
             variables_from_yaml = yaml.safe_load(stream)
         envvars = getattr(namespace, self.dest)
         envvars.extend(variables_from_yaml)
