@@ -2,6 +2,7 @@
 
 """Tests for `op_env` package."""
 
+import argparse
 import io
 import os
 import pytest
@@ -19,6 +20,15 @@ from op_env.op import (
     NoEntriesOPLookupError,
     NoFieldValueOPLookupError,
 )
+
+
+@pytest.fixture
+def object_yaml_file():
+    with tempfile.NamedTemporaryFile(mode="w+t") as yaml_file:
+        contents = {'foo': 'bar'}
+        yaml.dump(contents, yaml_file)
+        yaml_file.flush()
+        yield yaml_file.name
 
 
 @pytest.fixture
@@ -289,6 +299,12 @@ def test_parse_args_run_operation_with_yaml_arguments_and_environment_arguments(
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['VAR0', 'VAR1', 'VAR2'],
                     'operation': 'run'}
+
+
+def test_parse_args_run_operation_with_object_file_yaml_argument(object_yaml_file):
+    argv = ['op-env', 'run', '-y', object_yaml_file, 'mycmd', '1', '2', '3']
+    with pytest.raises(argparse.ArgumentTypeError, match='YAML file must be a list; found'):
+        parse_argv(argv)
 
 
 def test_parse_args_run_operation_with_invalid_file_yaml_argument(invalid_yaml_file):
