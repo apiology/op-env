@@ -26,6 +26,12 @@ class AppendListFromYAMLAction(argparse.Action):
         filename = values
         with open(filename, 'r') as stream:
             variables_from_yaml = yaml.safe_load(stream)
+            if variables_from_yaml is None:
+                # treat an empty file as an empty list
+                variables_from_yaml = []
+            if not isinstance(variables_from_yaml, list):
+                raise argparse.ArgumentTypeError('YAML file must be a list; '
+                                                 f'found {variables_from_yaml}')
         envvars = getattr(namespace, self.dest)
         envvars.extend(variables_from_yaml)
 
