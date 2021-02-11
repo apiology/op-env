@@ -6,7 +6,9 @@ import io
 import os
 import pytest
 import subprocess
+import tempfile
 from unittest.mock import patch, call
+import yaml
 
 from op_env._cli import parse_argv, process_args
 from op_env.op import (
@@ -17,6 +19,15 @@ from op_env.op import (
     NoEntriesOPLookupError,
     NoFieldValueOPLookupError,
 )
+
+
+@pytest.fixture
+def two_item_yaml_file():
+    with tempfile.NamedTemporaryFile(mode="w+t") as yaml_file:
+        contents = ['VAR1', 'VAR2']
+        yaml.dump(contents, yaml_file)
+        yaml_file.flush()
+        yield yaml_file.name
 
 
 @pytest.mark.skip(reason="under development")
@@ -245,6 +256,25 @@ def test_parse_args_run_operation_with_environment_arguments():
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['DUMMY'],
+                    'operation': 'run'}
+
+
+@pytest.mark.skip(reason="under development")
+def test_parse_args_run_operation_with_multiple_yaml_and_environment_arguments(two_item_yaml_file):
+    assert False
+
+
+@pytest.mark.skip(reason="under development")
+def test_parse_args_run_operation_with_yaml_arguments_and_environment_arguments(two_item_yaml_file):
+    assert False
+
+
+@pytest.mark.skip(reason="under development")
+def test_parse_args_run_operation_with_yaml_arguments(two_item_yaml_file):
+    argv = ['op-env', 'run', '-y', two_item_yaml_file]
+    args = parse_argv(argv)
+    assert args == {'command': ['mycmd', '1', '2', '3'],
+                    'environment': ['VAR1', 'VAR2'],
                     'operation': 'run'}
 
 
