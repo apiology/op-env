@@ -222,7 +222,7 @@ def test_parse_args_run_operation_no_env_variables():
                     'operation': 'run'}
 
 
-def test_parse_args_run_operation_with_multiple_variables():
+def test_parse_args_run_operation_with_multiple_environment_arguments():
     argv = ['op-env', 'run', '-e', 'DUMMY', '-e', 'DUMMY2', 'mycmd']
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
@@ -230,7 +230,7 @@ def test_parse_args_run_operation_with_multiple_variables():
                     'operation': 'run'}
 
 
-def test_parse_args_run_operation_with_arguments():
+def test_parse_args_run_operation_with_environment_arguments():
     argv = ['op-env', 'run', '-e', 'DUMMY', 'mycmd', '1', '2', '3']
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
