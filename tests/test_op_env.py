@@ -269,9 +269,8 @@ def test_parse_args_run_operation_with_yaml_arguments_and_environment_arguments(
     assert False
 
 
-@pytest.mark.skip(reason="under development")
 def test_parse_args_run_operation_with_yaml_arguments(two_item_yaml_file):
-    argv = ['op-env', 'run', '-y', two_item_yaml_file]
+    argv = ['op-env', 'run', '-y', two_item_yaml_file, 'mycmd', '1', '2', '3']
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['VAR1', 'VAR2'],

@@ -6,6 +6,7 @@ from typing import List, Dict
 from typing_extensions import TypedDict
 import subprocess
 import os
+import yaml
 from .op import op_smart_lookup
 
 
@@ -13,6 +14,20 @@ class Arguments(TypedDict):
     operation: str
     environment: List[str]
     command: List[str]
+
+
+# TODO: Add typing
+class AppendListFromYAMLAction(argparse.Action):
+    #    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+    #        if nargs is not None:  # TODO: is this needed?
+    #            raise ValueError("nargs not allowed")
+    #        super().__init__(option_strings, dest, **kwargs)
+    #
+    def __call__(self, parser, namespace, values, option_string=None):
+        with open(values, 'r') as stream:
+            variables_from_yaml = yaml.safe_load(stream)
+        envvars = getattr(namespace, self.dest)
+        envvars.extend(variables_from_yaml)
 
 
 def add_environment_arguments(arg_parser: argparse.ArgumentParser):
@@ -24,6 +39,9 @@ def add_environment_arguments(arg_parser: argparse.ArgumentParser):
                             'based on item with same tag in 1Password')
     arg_parser.add_argument('--yaml-environment', '-y',
                             metavar='YAMLENV',
+                            action=AppendListFromYAMLAction,
+                            dest='environment',
+                            default=[],
                             help='YAML config specifying a list of environment variable '
                             'names to set')
 
