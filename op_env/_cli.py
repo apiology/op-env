@@ -22,6 +22,10 @@ def add_environment_arguments(arg_parser: argparse.ArgumentParser):
                             default=[],
                             help='environment variable name to set, '
                             'based on item with same tag in 1Password')
+    arg_parser.add_argument('--yaml-environment', '-y',
+                            metavar='YAMLENV',
+                            help='YAML config specifying a list of environment variable '
+                            'names to set')
 
 
 def parse_argv(argv: List[str]) -> Arguments:
