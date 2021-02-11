@@ -15,7 +15,7 @@ class Arguments(TypedDict):
     command: List[str]
 
 
-def add_environment_argument(arg_parser: argparse.ArgumentParser):
+def add_environment_arguments(arg_parser: argparse.ArgumentParser):
     arg_parser.add_argument('--environment', '-e',
                             metavar='ENVVAR',
                             action='append',
@@ -32,14 +32,14 @@ def parse_argv(argv: List[str]) -> Arguments:
     run_parser = subparsers.add_parser('run',
                                        help='Run the specified command '
                                        'with the given environment variables')
-    add_environment_argument(run_parser)
+    add_environment_arguments(run_parser)
     run_parser.add_argument('command',
                             nargs='+',
                             help='Command to run with the environment set from 1Password')
     json_parser = subparsers.add_parser('json',
                                         help='Produce simple JSON on stdout '
                                         'mapping requested env variables to values')
-    add_environment_argument(json_parser)
+    add_environment_arguments(json_parser)
     return vars(parser.parse_args(argv[1:]))  # type: ignore
 
 
