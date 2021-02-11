@@ -30,7 +30,6 @@ def two_item_yaml_file():
         yield yaml_file.name
 
 
-@pytest.mark.skip(reason="under development")
 def test_process_args_shows_json_with_simple_env():
     with patch('op_env._cli.op_smart_lookup') as mock_op_lookup,\
          patch('sys.stdout', new_callable=io.StringIO) as stdout_stringio:
@@ -41,7 +40,6 @@ def test_process_args_shows_json_with_simple_env():
         mock_op_lookup.assert_called_with('a')
 
 
-@pytest.mark.skip(reason="under development")
 def test_process_args_runs_simple_command_with_simple_env():
     with patch('op_env._cli.subprocess') as mock_subprocess,\
          patch('op_env._cli.op_smart_lookup') as mock_op_lookup,\
@@ -56,7 +54,6 @@ def test_process_args_runs_simple_command_with_simple_env():
                                                            'ORIGINAL_ENV': 'TRUE'})
 
 
-@pytest.mark.skip(reason="under development")
 def test_process_args_runs_simple_command():
     with patch('op_env._cli.subprocess') as mock_subprocess,\
          patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True):
@@ -69,7 +66,6 @@ def test_process_args_runs_simple_command():
         })
 
 
-@pytest.mark.skip(reason="under development")
 def test_process_args_rejects_non_run():
     with patch('op_env.op.subprocess'):  # for safety
         with pytest.raises(ValueError):
@@ -77,7 +73,6 @@ def test_process_args_rejects_non_run():
             process_args(args)
 
 
-@pytest.mark.skip(reason="under development")
 def test_fields_to_try_conversion_username():
     with patch('op_env.op.subprocess'):  # for safety
         out = _op_fields_to_try('ABC_USER')
@@ -215,7 +210,6 @@ def test_op_smart_lookup_chooses_first():
         assert ret == mock_op_lookup.return_value
 
 
-@pytest.mark.skip(reason="under development")
 def test_parse_args_json_operation_no_env_variables():
     argv = ['op-env', 'json']
     args = parse_argv(argv)
@@ -223,7 +217,6 @@ def test_parse_args_json_operation_no_env_variables():
                     'operation': 'json'}
 
 
-@pytest.mark.skip(reason="under development")
 def test_parse_args_run_operation_with_long_env_variables():
     argv = ['op-env', 'run', '-e', 'DUMMY', '--environment', 'DUMMY2', 'mycmd']
     args = parse_argv(argv)
@@ -232,7 +225,6 @@ def test_parse_args_run_operation_with_long_env_variables():
                     'operation': 'run'}
 
 
-@pytest.mark.skip(reason="under development")
 def test_parse_args_run_operation_no_env_variables():
     argv = ['op-env', 'run', 'mycmd']
     args = parse_argv(argv)
@@ -241,7 +233,6 @@ def test_parse_args_run_operation_no_env_variables():
                     'operation': 'run'}
 
 
-@pytest.mark.skip(reason="under development")
 def test_parse_args_run_operation_with_multiple_environment_arguments():
     argv = ['op-env', 'run', '-e', 'DUMMY', '-e', 'DUMMY2', 'mycmd']
     args = parse_argv(argv)
@@ -250,7 +241,6 @@ def test_parse_args_run_operation_with_multiple_environment_arguments():
                     'operation': 'run'}
 
 
-@pytest.mark.skip(reason="under development")
 def test_parse_args_run_operation_with_environment_arguments():
     argv = ['op-env', 'run', '-e', 'DUMMY', 'mycmd', '1', '2', '3']
     args = parse_argv(argv)
@@ -277,7 +267,6 @@ def test_parse_args_run_operation_with_yaml_arguments(two_item_yaml_file):
                     'operation': 'run'}
 
 
-@pytest.mark.skip(reason="under development")
 def test_parse_args_run_simple():
     argv = ['op-env', 'run', '-e', 'DUMMY', 'mycmd']
     args = parse_argv(argv)
