@@ -2,11 +2,14 @@
 
 """Tests for `op_env` package."""
 
+import argparse
 import io
 import os
 import pytest
 import subprocess
+import tempfile
 from unittest.mock import patch, call
+import yaml
 
 from op_env._cli import parse_argv, process_args
 from op_env.op import (
@@ -17,6 +20,74 @@ from op_env.op import (
     NoEntriesOPLookupError,
     NoFieldValueOPLookupError,
 )
+
+
+@pytest.fixture
+def list_of_number_yaml_file():
+    with tempfile.NamedTemporaryFile(mode="w+t") as yaml_file:
+        contents = [123, 456]
+        yaml.dump(contents, yaml_file)
+        yaml_file.flush()
+        yield yaml_file.name
+
+
+@pytest.fixture
+def number_yaml_file():
+    with tempfile.NamedTemporaryFile(mode="w+t") as yaml_file:
+        contents = 123
+        yaml.dump(contents, yaml_file)
+        yaml_file.flush()
+        yield yaml_file.name
+
+
+@pytest.fixture
+def string_yaml_file():
+    with tempfile.NamedTemporaryFile(mode="w+t") as yaml_file:
+        contents = 'foo'
+        yaml.dump(contents, yaml_file)
+        yaml_file.flush()
+        yield yaml_file.name
+
+
+@pytest.fixture
+def object_yaml_file():
+    with tempfile.NamedTemporaryFile(mode="w+t") as yaml_file:
+        contents = {'foo': 'bar'}
+        yaml.dump(contents, yaml_file)
+        yaml_file.flush()
+        yield yaml_file.name
+
+
+@pytest.fixture
+def invalid_yaml_file():
+    with tempfile.NamedTemporaryFile(mode="w+t") as yaml_file:
+        yaml_file.write('"')
+        yaml_file.flush()
+        yield yaml_file.name
+
+
+@pytest.fixture
+def empty_file():
+    with tempfile.NamedTemporaryFile(mode="w+t") as yaml_file:
+        yield yaml_file.name
+
+
+@pytest.fixture
+def one_item_yaml_file():
+    with tempfile.NamedTemporaryFile(mode="w+t") as yaml_file:
+        contents = ['VARA']
+        yaml.dump(contents, yaml_file)
+        yaml_file.flush()
+        yield yaml_file.name
+
+
+@pytest.fixture
+def two_item_yaml_file():
+    with tempfile.NamedTemporaryFile(mode="w+t") as yaml_file:
+        contents = ['VAR1', 'VAR2']
+        yaml.dump(contents, yaml_file)
+        yaml_file.flush()
+        yield yaml_file.name
 
 
 def test_process_args_shows_json_with_simple_env():
@@ -222,7 +293,7 @@ def test_parse_args_run_operation_no_env_variables():
                     'operation': 'run'}
 
 
-def test_parse_args_run_operation_with_multiple_variables():
+def test_parse_args_run_operation_with_multiple_environment_arguments():
     argv = ['op-env', 'run', '-e', 'DUMMY', '-e', 'DUMMY2', 'mycmd']
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
@@ -230,11 +301,77 @@ def test_parse_args_run_operation_with_multiple_variables():
                     'operation': 'run'}
 
 
-def test_parse_args_run_operation_with_arguments():
+def test_parse_args_run_operation_with_environment_arguments():
     argv = ['op-env', 'run', '-e', 'DUMMY', 'mycmd', '1', '2', '3']
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['DUMMY'],
+                    'operation': 'run'}
+
+
+def test_parse_args_run_operation_with_multiple_yaml_and_environment_arguments(one_item_yaml_file,
+                                                                               two_item_yaml_file):
+    argv = ['op-env', 'run', '-e', 'VAR_1', '-e', 'VAR0',
+            '-y', two_item_yaml_file, '-y', one_item_yaml_file,
+            'mycmd', '1', '2', '3']
+    args = parse_argv(argv)
+    assert args == {'command': ['mycmd', '1', '2', '3'],
+                    'environment': ['VAR_1', 'VAR0', 'VAR1', 'VAR2', 'VARA'],
+                    'operation': 'run'}
+
+
+def test_parse_args_run_operation_with_yaml_arguments_and_environment_arguments(two_item_yaml_file):
+    argv = ['op-env', 'run', '-e', 'VAR0', '-y', two_item_yaml_file, 'mycmd', '1', '2', '3']
+    args = parse_argv(argv)
+    assert args == {'command': ['mycmd', '1', '2', '3'],
+                    'environment': ['VAR0', 'VAR1', 'VAR2'],
+                    'operation': 'run'}
+
+
+def test_list_of_numbers_yaml_argument(list_of_number_yaml_file):
+    argv = ['op-env', 'run', '-y', list_of_number_yaml_file, 'mycmd', '1', '2', '3']
+    with pytest.raises(argparse.ArgumentTypeError,
+                       match='YAML file must contain a list of strings'):
+        parse_argv(argv)
+
+
+def test_parse_args_run_operation_with_number_file_yaml_argument(number_yaml_file):
+    argv = ['op-env', 'run', '-y', number_yaml_file, 'mycmd', '1', '2', '3']
+    with pytest.raises(argparse.ArgumentTypeError, match='YAML file must be a list; found'):
+        parse_argv(argv)
+
+
+def test_parse_args_run_operation_with_string_file_yaml_argument(string_yaml_file):
+    argv = ['op-env', 'run', '-y', string_yaml_file, 'mycmd', '1', '2', '3']
+    with pytest.raises(argparse.ArgumentTypeError, match='YAML file must be a list; found'):
+        parse_argv(argv)
+
+
+def test_parse_args_run_operation_with_object_file_yaml_argument(object_yaml_file):
+    argv = ['op-env', 'run', '-y', object_yaml_file, 'mycmd', '1', '2', '3']
+    with pytest.raises(argparse.ArgumentTypeError, match='YAML file must be a list; found'):
+        parse_argv(argv)
+
+
+def test_parse_args_run_operation_with_invalid_file_yaml_argument(invalid_yaml_file):
+    argv = ['op-env', 'run', '-y', invalid_yaml_file, 'mycmd', '1', '2', '3']
+    with pytest.raises(yaml.scanner.ScannerError):
+        parse_argv(argv)
+
+
+def test_parse_args_run_operation_with_empty_file_yaml_argument(empty_file):
+    argv = ['op-env', 'run', '-y', empty_file, 'mycmd', '1', '2', '3']
+    args = parse_argv(argv)
+    assert args == {'command': ['mycmd', '1', '2', '3'],
+                    'environment': [],
+                    'operation': 'run'}
+
+
+def test_parse_args_run_operation_with_yaml_argument(two_item_yaml_file):
+    argv = ['op-env', 'run', '-y', two_item_yaml_file, 'mycmd', '1', '2', '3']
+    args = parse_argv(argv)
+    assert args == {'command': ['mycmd', '1', '2', '3'],
+                    'environment': ['VAR1', 'VAR2'],
                     'operation': 'run'}
 
 
@@ -253,7 +390,7 @@ def test_cli_run():
 
 
 def test_cli_help_run():
-    expected_help = """usage: op-env run [-h] [--environment ENVVAR] command [command ...]
+    expected_help = """usage: op-env run [-h] [--environment ENVVAR] [--yaml-environment YAMLENV] command [command ...]
 
 positional arguments:
   command               Command to run with the environment set from 1Password
@@ -262,6 +399,8 @@ optional arguments:
   -h, --help            show this help message and exit
   --environment ENVVAR, -e ENVVAR
                         environment variable name to set, based on item with same tag in 1Password
+  --yaml-environment YAMLENV, -y YAMLENV
+                        YAML config specifying a list of environment variable names to set
 """
     request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
     env = {}
@@ -274,12 +413,14 @@ optional arguments:
 
 
 def test_cli_help_json():
-    expected_help = """usage: op-env json [-h] [--environment ENVVAR]
+    expected_help = """usage: op-env json [-h] [--environment ENVVAR] [--yaml-environment YAMLENV]
 
 optional arguments:
   -h, --help            show this help message and exit
   --environment ENVVAR, -e ENVVAR
                         environment variable name to set, based on item with same tag in 1Password
+  --yaml-environment YAMLENV, -y YAMLENV
+                        YAML config specifying a list of environment variable names to set
 """
     request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
     env = {}

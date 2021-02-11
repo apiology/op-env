@@ -18,7 +18,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements: List[str] = ['typing_extensions']
+requirements: List[str] = ['typing_extensions', 'PyYAML']
 
 setup_requirements: List[str] = ['pytest-runner']
 
