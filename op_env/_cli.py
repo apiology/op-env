@@ -102,7 +102,8 @@ def process_args(args: Arguments) -> int:
         return 0
     elif args['operation'] == 'sh':
         new_env = do_smart_lookups(args['environment'])
-        print('a=b; export a')
+        for envvar, envvalue in new_env.items():
+            print(f'{envvar}={envvalue}; export {envvar}')
         return 0
     else:
         raise ValueError(f"Unknown operation: {args['operation']}")
