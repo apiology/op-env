@@ -392,6 +392,8 @@ def test_cli_run():
 def test_cli_help_run():
     expected_help = """usage: op-env run [-h] [--environment ENVVAR] [--yaml-environment YAMLENV] command [command ...]
 
+Run the specified command with the given environment variables
+
 positional arguments:
   command               Command to run with the environment set from 1Password
 
@@ -414,6 +416,8 @@ optional arguments:
 
 def test_cli_help_json():
     expected_help = """usage: op-env json [-h] [--environment ENVVAR] [--yaml-environment YAMLENV]
+
+Produce simple JSON on stdout mapping requested env variables to values
 
 optional arguments:
   -h, --help            show this help message and exit
