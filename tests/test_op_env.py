@@ -96,7 +96,7 @@ def test_process_args_shows_json_with_simple_env():
         args = {'operation': 'json', 'environment': ['a']}
         mock_op_lookup.return_value = "1"
         process_args(args)
-        assert stdout_stringio.getvalue(), '{"a": "1"}'
+        assert stdout_stringio.getvalue() == '{"a": "1"}\n'
         mock_op_lookup.assert_called_with('a')
 
 
@@ -112,6 +112,47 @@ def test_process_args_runs_simple_command_with_simple_env():
         mock_subprocess.check_call.assert_called_with(command,
                                                       env={'a': mock_op_lookup.return_value,
                                                            'ORIGINAL_ENV': 'TRUE'})
+
+
+def test_process_args_shows_env_with_variables_needing_escape():
+    def fake_op_smart_lookup(k):
+        return {
+            'a': "'",
+            'c': 'd',
+         }[k]
+
+    with patch('op_env._cli.op_smart_lookup', new=fake_op_smart_lookup),\
+         patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True),\
+         patch('sys.stdout', new_callable=io.StringIO) as stdout_stringio:
+        args = {'operation': 'sh', 'environment': ['a', 'c']}
+        process_args(args)
+        assert stdout_stringio.getvalue() == 'a=\'\'"\'"\'\'; export a\nc=d; export c\n'
+
+
+def test_process_args_shows_env_with_multiple_variables():
+    def fake_op_smart_lookup(k):
+        return {
+            'a': 'b',
+            'c': 'd',
+         }[k]
+
+    with patch('op_env._cli.op_smart_lookup', new=fake_op_smart_lookup),\
+         patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True),\
+         patch('sys.stdout', new_callable=io.StringIO) as stdout_stringio:
+        args = {'operation': 'sh', 'environment': ['a', 'c']}
+        process_args(args)
+        assert stdout_stringio.getvalue() == 'a=b; export a\nc=d; export c\n'
+
+
+def test_process_args_shows_env_with_simple_env():
+    with patch('op_env._cli.op_smart_lookup') as mock_op_lookup,\
+         patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True),\
+         patch('sys.stdout', new_callable=io.StringIO) as stdout_stringio:
+        mock_op_lookup.return_value = 'b'
+        args = {'operation': 'sh', 'environment': ['a']}
+        process_args(args)
+        assert stdout_stringio.getvalue() == 'a=b; export a\n'
+        mock_op_lookup.assert_called_with('a')
 
 
 def test_process_args_runs_simple_command():
@@ -381,6 +422,12 @@ def test_parse_args_run_simple():
     assert args == {'command': ['mycmd'], 'environment': ['DUMMY'], 'operation': 'run'}
 
 
+def test_parse_args_sh_simple():
+    argv = ['op-env', 'sh', '-e', 'DUMMY']
+    args = parse_argv(argv)
+    assert args == {'environment': ['DUMMY'], 'operation': 'sh'}
+
+
 @pytest.mark.skip(reason="need to mock op binary in test PATH")
 def test_cli_run():
     argv = ['op-env', 'run', '-e', 'DUMMY', 'env']
@@ -436,8 +483,30 @@ optional arguments:
     assert actual_help == expected_help
 
 
+def test_cli_help_sh():
+    expected_help = """usage: op-env sh [-h] [--environment ENVVAR] [--yaml-environment YAMLENV]
+
+Produce commands on stdout that can be 'eval'ed to set variables in current shell
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --environment ENVVAR, -e ENVVAR
+                        environment variable name to set, based on item with same tag in 1Password
+  --yaml-environment YAMLENV, -y YAMLENV
+                        YAML config specifying a list of environment variable names to set
+"""
+    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
+    env = {}
+    env.update(os.environ)
+    env.update(request_long_lines)
+
+    # older python versions show arguments like this:
+    actual_help = subprocess.check_output(['op-env', 'sh', '--help'], env=env).decode('utf-8')
+    assert actual_help == expected_help
+
+
 def test_cli_no_args():
-    expected_help = """usage: op-env [-h] {run,json} ...
+    expected_help = """usage: op-env [-h] {run,json,sh} ...
 op-env: error: the following arguments are required: operation
 """
     request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
@@ -454,15 +523,16 @@ op-env: error: the following arguments are required: operation
 
 
 def test_cli_help():
-    expected_help = """usage: op-env [-h] {run,json} ...
+    expected_help = """usage: op-env [-h] {run,json,sh} ...
 
 positional arguments:
-  {run,json}
-    run       Run the specified command with the given environment variables
-    json      Produce simple JSON on stdout mapping requested env variables to values
+  {run,json,sh}
+    run          Run the specified command with the given environment variables
+    json         Produce simple JSON on stdout mapping requested env variables to values
+    sh           Produce commands on stdout that can be 'eval'ed to set variables in current shell
 
 optional arguments:
-  -h, --help  show this help message and exit
+  -h, --help     show this help message and exit
 """
     request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
     env = {}
