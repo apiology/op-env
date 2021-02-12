@@ -114,6 +114,19 @@ def test_process_args_runs_simple_command_with_simple_env():
                                                            'ORIGINAL_ENV': 'TRUE'})
 
 
+def test_process_args_shows_env_with_simple_env():
+    with patch('op_env._cli.op_smart_lookup') as mock_op_lookup,\
+         patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True),\
+         patch('sys.stdout', new_callable=io.StringIO) as stdout_stringio:
+        mock_op_lookup.return_value = {
+            'a': 'b'
+        }
+        args = {'operation': 'sh', 'environment': ['a']}
+        process_args(args)
+        assert stdout_stringio.getvalue() == 'a=b; export a\n'
+        mock_op_lookup.assert_called_with('a')
+
+
 def test_process_args_runs_simple_command():
     with patch('op_env._cli.subprocess') as mock_subprocess,\
          patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True):
