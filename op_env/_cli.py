@@ -60,16 +60,18 @@ def parse_argv(argv: List[str]) -> Arguments:
 
     subparsers = parser.add_subparsers(dest='operation')
     subparsers.required = True
+    run_desc = 'Run the specified command with the given environment variables'
     run_parser = subparsers.add_parser('run',
-                                       help='Run the specified command '
-                                       'with the given environment variables')
+                                       description=run_desc,
+                                       help=run_desc)
     add_environment_arguments(run_parser)
     run_parser.add_argument('command',
                             nargs='+',
                             help='Command to run with the environment set from 1Password')
+    json_desc = 'Produce simple JSON on stdout mapping requested env variables to values'
     json_parser = subparsers.add_parser('json',
-                                        help='Produce simple JSON on stdout '
-                                        'mapping requested env variables to values')
+                                        description=json_desc,
+                                        help=json_desc)
     add_environment_arguments(json_parser)
     return vars(parser.parse_args(argv[1:]))  # type: ignore
 
