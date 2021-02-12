@@ -96,7 +96,7 @@ def test_process_args_shows_json_with_simple_env():
         args = {'operation': 'json', 'environment': ['a']}
         mock_op_lookup.return_value = "1"
         process_args(args)
-        assert stdout_stringio.getvalue(), '{"a": "1"}'
+        assert stdout_stringio.getvalue() == '{"a": "1"}\n'
         mock_op_lookup.assert_called_with('a')
 
 
