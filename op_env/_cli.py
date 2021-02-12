@@ -1,6 +1,7 @@
 """Console script for op_env."""
 import argparse
 import json
+import pipes
 import sys
 from typing import List, Dict, Optional, Any, Union, Sequence
 from typing_extensions import TypedDict
@@ -103,7 +104,7 @@ def process_args(args: Arguments) -> int:
     elif args['operation'] == 'sh':
         new_env = do_smart_lookups(args['environment'])
         for envvar, envvalue in new_env.items():
-            print(f'{envvar}={envvalue}; export {envvar}')
+            print(f'{envvar}={pipes.quote(envvalue)}; export {envvar}')
         return 0
     else:
         raise ValueError(f"Unknown operation: {args['operation']}")

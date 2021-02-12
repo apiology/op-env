@@ -114,6 +114,21 @@ def test_process_args_runs_simple_command_with_simple_env():
                                                            'ORIGINAL_ENV': 'TRUE'})
 
 
+def test_process_args_shows_env_with_variables_needing_escape():
+    def fake_op_smart_lookup(k):
+        return {
+            'a': "'",
+            'c': 'd',
+         }[k]
+
+    with patch('op_env._cli.op_smart_lookup', new=fake_op_smart_lookup),\
+         patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True),\
+         patch('sys.stdout', new_callable=io.StringIO) as stdout_stringio:
+        args = {'operation': 'sh', 'environment': ['a', 'c']}
+        process_args(args)
+        assert stdout_stringio.getvalue() == 'a=\'\'"\'"\'\'; export a\nc=d; export c\n'
+
+
 def test_process_args_shows_env_with_multiple_variables():
     def fake_op_smart_lookup(k):
         return {
