@@ -73,6 +73,12 @@ def parse_argv(argv: List[str]) -> Arguments:
                                         description=json_desc,
                                         help=json_desc)
     add_environment_arguments(json_parser)
+    sh_desc = ("Produce commands on stdout that can be 'eval'ed to set "
+               "variables in current shell")
+    sh_parser = subparsers.add_parser('sh',
+                                      help=sh_desc,
+                                      description=sh_desc)
+    add_environment_arguments(sh_parser)
     return vars(parser.parse_args(argv[1:]))  # type: ignore
 
 
