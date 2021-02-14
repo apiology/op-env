@@ -3,14 +3,15 @@
 
 """The setup script."""
 
-from setuptools import setup, find_packages
 import distutils
 from distutils.cmd import Command
 import distutils.command.clean
 from distutils.dir_util import remove_tree
-import subprocess
 import os
-from typing import List, Tuple, Optional
+import subprocess
+from typing import List, Optional, Tuple
+
+from setuptools import find_packages, setup
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()

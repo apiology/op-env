@@ -5,20 +5,22 @@
 import argparse
 import io
 import os
-import pytest
 import subprocess
 import tempfile
-from unittest.mock import patch, call
+from unittest.mock import call, patch
+
+import pytest
 import yaml
+
 
 from op_env._cli import parse_argv, process_args
 from op_env.op import (
-    op_lookup,
-    op_smart_lookup,
     _op_fields_to_try,
-    TooManyEntriesOPLookupError,
     NoEntriesOPLookupError,
     NoFieldValueOPLookupError,
+    op_lookup,
+    op_smart_lookup,
+    TooManyEntriesOPLookupError,
 )
 
 

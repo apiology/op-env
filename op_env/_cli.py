@@ -1,13 +1,15 @@
 """Console script for op_env."""
 import argparse
 import json
-import pipes
-import sys
-from typing import List, Dict, Optional, Any, Union, Sequence
-from typing_extensions import TypedDict
-import subprocess
 import os
+import pipes
+import subprocess
+import sys
+from typing import Any, Dict, List, Optional, Sequence, Union
+
+from typing_extensions import TypedDict
 import yaml
+
 from .op import op_smart_lookup
 
 
