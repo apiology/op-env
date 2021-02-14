@@ -1,6 +1,6 @@
-import subprocess
 import json
-from typing import List, Any
+import subprocess
+from typing import Any, List
 
 
 class OPLookupError(LookupError):
