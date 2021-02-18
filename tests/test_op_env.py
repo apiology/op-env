@@ -176,22 +176,34 @@ def test_process_args_rejects_non_run():
             process_args(args)
 
 
+def test_fields_to_try_breaks_on_double_underscore_and_underscore():
+    with patch('op_env.op.subprocess'):  # for safety
+        out = _op_fields_to_try('ABC__FLOOGLE_BAR')
+        assert out == ['abc__floogle_bar', 'floogle_bar', 'bar', 'password']
+
+
+def test_fields_to_try_breaks_on_double_underscore():
+    with patch('op_env.op.subprocess'):  # for safety
+        out = _op_fields_to_try('ABC__FLOOGLE')
+        assert out == ['abc__floogle', 'floogle', 'password']
+
+
 def test_fields_to_try_conversion_username():
     with patch('op_env.op.subprocess'):  # for safety
         out = _op_fields_to_try('ABC_USER')
-        assert out == ['username', 'password']
+        assert out == ['abc_user', 'user', 'username', 'password']
 
 
 def test_fields_to_try_multiple_words():
     with patch('op_env.op.subprocess'):  # for safety
         out = _op_fields_to_try('ABC_FLOOGLE')
-        assert out == ['floogle', 'password']
+        assert out == ['abc_floogle', 'floogle', 'password']
 
 
 def test_fields_to_try_simple():
     with patch('op_env.op.subprocess'):  # for safety
         out = _op_fields_to_try('ABC')
-        assert out == ['password']
+        assert out == ['abc', 'password']
 
 
 def test_op_lookup_no_field_value():

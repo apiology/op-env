@@ -1,5 +1,6 @@
 import json
 import subprocess
+from collections import OrderedDict
 from typing import Any, List
 
 
@@ -63,16 +64,37 @@ def op_lookup(env_var_name: str, field_name: str = 'password') -> str:
     return get_output_str
 
 
-def _name_inferred_fields(env_var_name: str) -> List[str]:
+def last_underscored_component_lowercased(env_var_name: str) -> str:
     components = env_var_name.split('_')
-    if len(components) <= 1:
+    return components[-1].lower()
+
+
+def last_double_underscored_component_lowercased(env_var_name: str) -> str:
+    components = env_var_name.split('__')
+    return components[-1].lower()
+
+
+def all_lowercased(env_var_name: str) -> str:
+    return env_var_name.lower()
+
+
+def uniqify(fields: List[str]) -> List[str]:
+    "Removes duplicates but preserves order"
+    # https://stackoverflow.com/questions/4459703/how-to-make-lists-contain-only-distinct-element-in-python
+    return list(OrderedDict.fromkeys(fields))
+
+
+def aliases(fields: List[str]) -> List[str]:
+    if 'user' in fields:
+        return ['username']
+    else:
         return []
-    conversions = {
-        'user': 'username'
-    }
-    raw_value = components[-1].lower()
-    return [conversions.get(raw_value, raw_value)]
 
 
 def _op_fields_to_try(env_var_name: str) -> List[str]:
-    return _name_inferred_fields(env_var_name) + ['password']
+    candidates = uniqify([
+        all_lowercased(env_var_name),
+        last_double_underscored_component_lowercased(env_var_name),
+        last_underscored_component_lowercased(env_var_name),
+    ])
+    return candidates + aliases(candidates) + ['password']
