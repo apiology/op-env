@@ -10,12 +10,18 @@ from typing import Any, Dict, List, Optional, Sequence, Union
 from typing_extensions import TypedDict
 import yaml
 
-from .op import op_smart_lookup
+from .op import (
+    _op_consolidated_fields,
+    _op_get_item,
+    _op_list_items,
+    _op_pluck_correct_field,
+    EnvVarName,
+)
 
 
 class Arguments(TypedDict):
     operation: str
-    environment: List[str]
+    environment: List[EnvVarName]
     command: List[str]
 
 
@@ -85,10 +91,15 @@ def parse_argv(argv: List[str]) -> Arguments:
     return vars(parser.parse_args(argv[1:]))  # type: ignore
 
 
-def do_smart_lookups(envvars: List[str]) -> Dict[str, str]:
+def do_smart_lookups(env_var_names: List[EnvVarName]) -> Dict[str, str]:
+    list_items_output = _op_list_items(env_var_names)
+    all_fields_to_seek = _op_consolidated_fields(env_var_names)
+    field_values_for_envvars = _op_get_item(list_items_output,
+                                            env_var_names,
+                                            all_fields_to_seek)
     return {
-        envvar: op_smart_lookup(envvar)
-        for envvar in envvars
+        env_var_name: _op_pluck_correct_field(env_var_name, field_values_for_envvars[env_var_name])
+        for env_var_name in field_values_for_envvars
     }
 
 
