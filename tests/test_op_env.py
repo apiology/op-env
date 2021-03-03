@@ -126,21 +126,19 @@ def test_process_args_shows_json_with_simple_env() -> None:
                                             env_var_names,
                                             mock_all_fields_to_seek)
 
-        # mock_op_lookup.assert_called_with('a') # TODO
 
-
-@pytest.mark.skip(reason="refactoring")
 def test_process_args_runs_simple_command_with_simple_env():
     with patch('op_env._cli.subprocess') as mock_subprocess,\
-         patch('op_env._cli.op_smart_lookup') as mock_op_lookup,\
+         patch('op_env._cli.do_smart_lookups') as mock_do_smart_lookups,\
          patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True):
         command = ['env']
         args = {'operation': 'run', 'command': command,
                 'environment': ['a']}
+        mock_do_smart_lookups.return_value = {'a': '1'}
         process_args(args)
-        mock_op_lookup.assert_called_with('a')
+        mock_do_smart_lookups.assert_called_with(['a'])
         mock_subprocess.check_call.assert_called_with(command,
-                                                      env={'a': mock_op_lookup.return_value,
+                                                      env={'a': '1',
                                                            'ORIGINAL_ENV': 'TRUE'})
 
 
