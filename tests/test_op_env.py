@@ -14,7 +14,7 @@ import pytest
 import yaml
 
 
-from op_env._cli import Arguments, parse_argv, process_args
+from op_env._cli import Arguments, do_smart_lookups, parse_argv, process_args
 from op_env.op import (
     _op_fields_to_try,
     _op_pluck_correct_field,
@@ -277,8 +277,10 @@ def test_op_lookup_too_many_entries():
             assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'])
 
 
+# TODO: Test looking for field with a ',' in it
+
 @pytest.mark.skip(reason="refactoring")
-def test_op_pluck_correct_field_specific_field():
+def test_op_do_smart_lookups_one_var():
     with patch('op_env.op.subprocess') as mock_subprocess:
         list_output = b"[{}]"
         get_output = b"get_results\n"
@@ -286,12 +288,13 @@ def test_op_pluck_correct_field_specific_field():
             list_output,
             get_output,
         ]
-        out = op_lookup('ANY_TEST_VALUE', field_name='abc')
+        out = do_smart_lookups(['ANY_TEST_VALUE'])
         mock_subprocess.check_output.\
             assert_has_calls([call(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE']),
-                              call(['op', 'get', 'item', '-', '--fields', 'abc'],
+                              call(['op', 'get', 'item', '-', '--fields',
+                                    'any_test_value,password,value'],
                                    input=list_output)])
-        assert out == "get_results"
+        assert out == {'ANY_TEST_VALUE': 'get_results'}
 
 
 def test_op_pluck_correct_field_multiple_fields():

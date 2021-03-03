@@ -1,5 +1,5 @@
-# import json # TODO
 from collections import OrderedDict
+import json
 import subprocess
 from typing import Any, Collection, Dict, List, NewType, Sequence, Set, TypeVar
 
@@ -32,17 +32,19 @@ class NoFieldValueOPLookupError(OPLookupError):
 
 
 def _op_list_items(env_var_names: List[EnvVarName]) -> OpListItemsOpaqueOutput:
-    raise NotImplementedError
-    # list_command = ['op', 'list', 'items', '--tags', env_var_name]
-    # list_output = subprocess.check_output(list_command)
-    # list_output_data = json.loads(list_output)
-    # assert isinstance(list_output_data, list)
+    list_command = ['op', 'list', 'items', '--tags',
+                    ','.join(env_var_names)]
+    list_output = subprocess.check_output(list_command)
+    list_output_data = json.loads(list_output)
+    assert isinstance(list_output_data, list)
+    # TODO: Test this - probably look inside data to see if it was found?
     # if len(list_output_data) == 0:
     #     raise NoEntriesOPLookupError(f"No 1Password entries with tag {env_var_name} found")
     # if len(list_output_data) > 1:
     #     raise TooManyEntriesOPLookupError("Too many 1Password entries "
     #                                       f"with tag {env_var_name} found")
-    # return OpListItemsOpaqueOutput(list_output_data)
+    return OpListItemsOpaqueOutput(list_output_data)
+
 # TODO: prefix op cli commands with _op_cli?  unclear what is what
 
 
@@ -50,13 +52,17 @@ def _op_get_item(list_items_output: OpListItemsOpaqueOutput,
                  env_var_names: Collection[EnvVarName],
                  all_fields_to_seek: Collection[FieldName]) ->\
                  Dict[EnvVarName, Dict[FieldName, FieldValue]]:
-    raise NotImplementedError
+    sorted_fields_to_seek = sorted(all_fields_to_seek)
+    get_command: List[str] = ['op', 'get', 'item', '-', '--fields',
+                              ','.join(sorted_fields_to_seek)]
+    list_items_output_raw = json.dumps(list_items_output).encode('utf-8')
+    out = subprocess.check_output(get_command, input=list_items_output_raw)
+    # TODO: Write tests until this is written out
+    return {}
 
 
-# TODO is this needed anymore?  Is all functionality still tested and there?
+# TODO moved to op_get_item()
 # def _op_get_item_fields(list_output: bytes, field_name: FieldName = 'password') -> bytes:
-#    get_command = ['op', 'get', 'item', '-', '--fields', field_name]
-#    return subprocess.check_output(get_command, input=list_output)
 
 
 # TODO is this needed anymore?  Is all functionality still tested and there?
@@ -102,8 +108,9 @@ def aliases(fields: List[FieldName]) -> List[FieldName]:
         return []
 
 
-def _op_consolidated_fields(env_var_name: Collection[EnvVarName]) -> Set[FieldName]:
-    raise NotImplementedError
+def _op_consolidated_fields(env_var_names: Collection[EnvVarName]) -> Set[FieldName]:
+    # TODO: write tests until this is fully written out
+    return set(_op_fields_to_try(next(iter(env_var_names))))
 
 
 def _op_fields_to_try(env_var_name: EnvVarName) -> List[FieldName]:

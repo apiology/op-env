@@ -91,6 +91,7 @@ def parse_argv(argv: List[str]) -> Arguments:
     return vars(parser.parse_args(argv[1:]))  # type: ignore
 
 
+# TODO: move to op.py?
 def do_smart_lookups(env_var_names: List[EnvVarName]) -> Dict[str, str]:
     list_items_output = _op_list_items(env_var_names)
     all_fields_to_seek = _op_consolidated_fields(env_var_names)
