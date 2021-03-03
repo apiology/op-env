@@ -11,6 +11,5 @@
     "project_slug": "op_env",
     "pypi_username": "apiology",
     "type_of_github_repo": "public",
-    "use_pytest": "y",
     "version": "0.1.0"
 }
