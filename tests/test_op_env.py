@@ -168,16 +168,14 @@ def test_process_args_shows_env_with_multiple_variables():
         assert stdout_stringio.getvalue() == 'a=b; export a\nc=d; export c\n'
 
 
-@pytest.mark.skip(reason="refactoring")
 def test_process_args_shows_env_with_simple_env():
-    with patch('op_env._cli.op_smart_lookup') as mock_op_lookup,\
+    with patch('op_env._cli.do_smart_lookups') as mock_do_smart_lookups,\
          patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True),\
          patch('sys.stdout', new_callable=io.StringIO) as stdout_stringio:
-        mock_op_lookup.return_value = 'b'
+        mock_do_smart_lookups.return_value = {'a': 'b'}
         args = {'operation': 'sh', 'environment': ['a']}
         process_args(args)
         assert stdout_stringio.getvalue() == 'a=b; export a\n'
-        mock_op_lookup.assert_called_with('a')
 
 
 @pytest.mark.skip(reason="need to mock op binary in test PATH")
