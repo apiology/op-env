@@ -1,4 +1,4 @@
-.PHONY: clean clean-test clean-pyc clean-build docs help quality typecheck
+.PHONY: clean clean-test clean-pyc clean-build docs test help typecheck quality
 .DEFAULT_GOAL := default
 
 define BROWSER_PYSCRIPT
@@ -20,8 +20,6 @@ for line in sys.stdin:
 		print("%-20s %s" % (target, help))
 endef
 export PRINT_HELP_PYSCRIPT
-
-BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
