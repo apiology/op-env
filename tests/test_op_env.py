@@ -294,15 +294,11 @@ def test_op_pluck_correct_field_specific_field():
         assert out == "get_results"
 
 
-@pytest.mark.skip(reason="refactoring")
 def test_op_pluck_correct_field_multiple_fields():
-    with patch('op_env.op.op_lookup') as mock_op_lookup,\
-         patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
+    with patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle', 'blah']
-        mock_op_lookup.return_value = 'result value'
-        ret = op_smart_lookup('ENVVARNAME')
+        ret = _op_pluck_correct_field('ENVVARNAME', {'blah': '', 'floogle': 'result value'})
         mock_op_fields_to_try.assert_called_with('ENVVARNAME')
-        mock_op_lookup.assert_called_with('ENVVARNAME', field_name='floogle')
         assert ret == 'result value'
 
 
