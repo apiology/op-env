@@ -59,12 +59,6 @@ commands:
             "LC_ALL": "C.UTF-8"
             "LANG": "C.UTF-8"
 
-workflows:
-  version: 2
-  test:
-    jobs:
-      - test
-
 jobs:
   overcommit:
     docker:
