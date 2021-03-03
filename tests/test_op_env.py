@@ -17,6 +17,7 @@ import yaml
 from op_env._cli import Arguments, parse_argv, process_args
 from op_env.op import (
     _op_fields_to_try,
+    _op_pluck_correct_field,
     EnvVarName,
     FieldName,
     FieldValue,
@@ -350,15 +351,12 @@ def test_op_smart_lookup_multiple_fields_chooses_second():
         assert ret == 'result value'
 
 
-@pytest.mark.skip(reason="refactoring")
-def test_op_smart_lookup_chooses_first():
-    with patch('op_env.op.op_lookup') as mock_op_lookup,\
-         patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
+def test_op_pluck_correct_field_chooses_first():
+    with patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle']
-        ret = op_smart_lookup('ENVVARNAME')
+        ret = _op_pluck_correct_field('ENVVARNAME', {'floogle': 'myvalue'})
         mock_op_fields_to_try.assert_called_with('ENVVARNAME')
-        mock_op_lookup.assert_called_with('ENVVARNAME', field_name='floogle')
-        assert ret == mock_op_lookup.return_value
+        assert ret == 'myvalue'
 
 
 def test_parse_args_json_operation_no_env_variables():

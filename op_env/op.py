@@ -28,19 +28,7 @@ class NoFieldValueOPLookupError(OPLookupError):
     pass
 
 
-# TODO is this needed anymore?  Is all functionality still tested and there?
-# def op_smart_lookup(env_var_name: str) -> str:
-#     fields = _op_fields_to_try(env_var_name)
-#     for field in fields:
-#         try:
-#             return op_lookup(env_var_name, field_name=field)
-#         except NoFieldValueOPLookupError:
-#             pass
-#     raise NoFieldValueOPLookupError('1Passsword entry with tag '
-#                                     f'{env_var_name} has no value for '
-#                                     'the fields tried: '
-#                                     f'{", ".join(fields)}.  Please populate '
-#                                     'one of these fields in 1Password.')
+# def op_smart_lookup(env_var_name: str) -> str:  # TODO most renamed to _op_pluck_correct_field
 
 
 def _op_list_items(env_var_names: List[EnvVarName]) -> OpListItemsOpaqueOutput:
@@ -130,4 +118,12 @@ def _op_fields_to_try(env_var_name: EnvVarName) -> List[FieldName]:
 def _op_pluck_correct_field(env_var_name: EnvVarName,
                             field_values: Dict[FieldName,
                                                FieldValue]) -> FieldValue:
-    raise NotImplementedError
+    fields = _op_fields_to_try(env_var_name)
+    for field in fields:
+        if field in field_values and field_values[field] != '':
+            return field_values[field]
+    raise NoFieldValueOPLookupError('1Passsword entry with tag '
+                                    f'{env_var_name} has no value for '
+                                    'the fields tried: '
+                                    f'{", ".join(fields)}.  Please populate '
+                                    'one of these fields in 1Password.')
