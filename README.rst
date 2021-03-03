@@ -13,7 +13,9 @@ op-env
         :target: https://op-env.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-op-env allows you to use OnePassword entries as environment variable-style secrets
+WARNING: This is not ready for use yet!
+
+op-env allows you to use 1Password entries as environment variable-style secrets
 
 
 * Free software: MIT license

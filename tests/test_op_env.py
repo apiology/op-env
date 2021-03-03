@@ -4,8 +4,8 @@
 
 import pytest
 
-
 # from op_env import op_env
+
 
 
 @pytest.fixture
@@ -22,3 +22,35 @@ def test_content(response):
     """Sample pytest test function with the pytest fixture as an argument."""
     # from bs4 import BeautifulSoup
     # assert 'GitHub' in BeautifulSoup(response.content).title.string
+
+
+def test_process_args():
+    args = '<fake>'
+    with patch('builtins.print') as mock_print:
+        out = process_args()
+
+        assert out == 0
+        mock_print.assert_called_with('Arguments: <fake>')
+        mock_print.assert_called_with('Replace this message by putting '
+                                      'your code into op_env.cli.process_args')
+
+
+def test_parse_argv_run_simple():
+    argv = ['op_env', 'whatever']
+    args = parse_argv(argv)
+    assert vars(args) == {'_': ['whatever']}
+
+
+def test_cli_help():
+    expected_help = """usage: op_env [-h] [_ ...]
+
+positional arguments:
+  _
+
+optional arguments:
+  -h, --help  show this help message and exit
+"""
+    # older python versions show arguments like this:
+    alt_expected_help = expected_help.replace('[_ ...]', '[_ [_ ...]]')
+    actual_help = subprocess.check_output(['op_env', '--help']).decode('utf-8')
+    assert actual_help in [expected_help, alt_expected_help]

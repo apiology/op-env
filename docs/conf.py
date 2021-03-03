@@ -131,7 +131,7 @@ latex_elements: Dict[str, str] = {
 latex_documents = [
     (master_doc, 'op_env.tex',
      'op-env Documentation',
-     'Vince Broz', 'manual'),
+     "Vince Broz", 'manual'),
 ]
 
 
