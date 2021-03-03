@@ -306,23 +306,17 @@ def test_op_pluck_correct_field_multiple_fields():
         assert ret == 'result value'
 
 
-@pytest.mark.skip(reason="refactoring")
 def test_op_pluck_correct_field_multiple_fields_all_errors():
-    with patch('op_env.op.op_lookup') as mock_op_lookup,\
-         patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
+    with patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle', 'blah']
-        mock_op_lookup.side_effect = [NoFieldValueOPLookupError,
-                                      NoFieldValueOPLookupError]
         with pytest.raises(NoFieldValueOPLookupError,
                            match=('1Passsword entry with tag '
                                   'ENVVARNAME has no value for '
                                   'the fields tried: '
                                   "floogle, blah.  Please populate "
                                   'one of these fields in 1Password.')):
-            op_smart_lookup('ENVVARNAME')
+            _op_pluck_correct_field('ENVVARNAME', {'floogle': '', 'blah': ''})
         mock_op_fields_to_try.assert_called_with('ENVVARNAME')
-        mock_op_lookup.assert_has_calls([call('ENVVARNAME', field_name='floogle'),
-                                         call('ENVVARNAME', field_name='blah')])
 
 
 def test_op_pluck_correct_field_single_field_with_error():
