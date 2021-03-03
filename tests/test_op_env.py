@@ -325,16 +325,12 @@ def test_op_pluck_correct_field_multiple_fields_all_errors():
                                          call('ENVVARNAME', field_name='blah')])
 
 
-@pytest.mark.skip(reason="refactoring")
 def test_op_pluck_correct_field_single_field_with_error():
-    with patch('op_env.op.op_lookup') as mock_op_lookup,\
-         patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
+    with patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle']
-        mock_op_lookup.side_effect = NoFieldValueOPLookupError
         with pytest.raises(NoFieldValueOPLookupError):
-            op_smart_lookup('ENVVARNAME')
+            _op_pluck_correct_field('ENVVARNAME', {'floogle': ''})
         mock_op_fields_to_try.assert_called_with('ENVVARNAME')
-        mock_op_lookup.assert_called_with('ENVVARNAME', field_name='floogle')
 
 
 def test_op_pluck_correct_field_multiple_fields_chooses_second():
