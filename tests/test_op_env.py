@@ -278,7 +278,7 @@ def test_op_lookup_too_many_entries():
 
 
 @pytest.mark.skip(reason="refactoring")
-def test_op_lookup_specific_field():
+def test_op_pluck_correct_field_specific_field():
     with patch('op_env.op.subprocess') as mock_subprocess:
         list_output = b"[{}]"
         get_output = b"get_results\n"
@@ -295,7 +295,7 @@ def test_op_lookup_specific_field():
 
 
 @pytest.mark.skip(reason="refactoring")
-def test_op_smart_lookup_multiple_fields():
+def test_op_pluck_correct_field_multiple_fields():
     with patch('op_env.op.op_lookup') as mock_op_lookup,\
          patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle', 'blah']
@@ -307,7 +307,7 @@ def test_op_smart_lookup_multiple_fields():
 
 
 @pytest.mark.skip(reason="refactoring")
-def test_op_smart_lookup_multiple_fields_all_errors():
+def test_op_pluck_correct_field_multiple_fields_all_errors():
     with patch('op_env.op.op_lookup') as mock_op_lookup,\
          patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle', 'blah']
@@ -326,7 +326,7 @@ def test_op_smart_lookup_multiple_fields_all_errors():
 
 
 @pytest.mark.skip(reason="refactoring")
-def test_op_smart_lookup_single_field_with_error():
+def test_op_pluck_correct_field_single_field_with_error():
     with patch('op_env.op.op_lookup') as mock_op_lookup,\
          patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle']
@@ -337,17 +337,11 @@ def test_op_smart_lookup_single_field_with_error():
         mock_op_lookup.assert_called_with('ENVVARNAME', field_name='floogle')
 
 
-@pytest.mark.skip(reason="refactoring")
-def test_op_smart_lookup_multiple_fields_chooses_second():
-    with patch('op_env.op.op_lookup') as mock_op_lookup,\
-         patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
+def test_op_pluck_correct_field_multiple_fields_chooses_second():
+    with patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle', 'blah']
-        mock_op_lookup.side_effect = [NoFieldValueOPLookupError,
-                                      'result value']
-        ret = op_smart_lookup('ENVVARNAME')
+        ret = _op_pluck_correct_field('ENVVARNAME', {'floogle': '', 'blah': 'result value'})
         mock_op_fields_to_try.assert_called_with('ENVVARNAME')
-        mock_op_lookup.assert_has_calls([call('ENVVARNAME', field_name='floogle'),
-                                         call('ENVVARNAME', field_name='blah')])
         assert ret == 'result value'
 
 
