@@ -1,6 +1,6 @@
 # import json # TODO
-# import subprocess # TODO
 from collections import OrderedDict
+import subprocess
 from typing import Any, Collection, Dict, List, NewType, Sequence, Set, TypeVar
 
 OpListItemsOpaqueOutput = NewType('OpListItemsOpaqueOutput', List[Any])

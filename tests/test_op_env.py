@@ -191,7 +191,6 @@ def test_process_args_runs_simple_command():
         })
 
 
-@pytest.mark.skip(reason="refactoring")
 def test_process_args_rejects_non_run():
     with patch('op_env.op.subprocess'):  # for safety
         with pytest.raises(ValueError):
