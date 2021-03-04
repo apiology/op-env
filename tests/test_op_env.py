@@ -229,7 +229,36 @@ def test_fields_to_try_simple():
         assert out == ['abc', 'password']
 
 
-def test_op_lookup_no_field_value():
+def test_op_do_smart_lookups_multiple_entries():
+    with patch('op_env.op.subprocess') as mock_subprocess:
+        list_output = \
+            b'[{"overview":{"tags":["ANY_TEST_VALUE"]}},' \
+            b'{"overview": {"tags": ["ANOTHER_TEST_VALUE"]}}]'
+        post_processed_list_output = \
+            b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}, ' \
+            b'{"overview": {"tags": ["ANOTHER_TEST_VALUE"]}}]'
+        get_output = \
+            b'{"any_test_value":"","another_test_value":"","password":"any","value":""}\n' \
+            b'{"any_test_value":"","another_test_value":"another",'\
+            b'"password":"get_results","value":""}'
+        mock_subprocess.check_output.side_effect = [
+            list_output,
+            get_output,
+        ]
+        out = do_smart_lookups(['ANY_TEST_VALUE', 'ANOTHER_TEST_VALUE'])
+        mock_subprocess.check_output.\
+            assert_has_calls([call(['op', 'list', 'items', '--tags',
+                                    'ANY_TEST_VALUE,ANOTHER_TEST_VALUE']),
+                              call(['op', 'get', 'item', '-', '--fields',
+                                    'another_test_value,any_test_value,password,value'],
+                                   input=post_processed_list_output)])
+        assert out == {
+            'ANY_TEST_VALUE': 'any',
+            'ANOTHER_TEST_VALUE': 'another'
+        }
+
+
+def test_do_smart_lookups_no_field_value():
     with patch('op_env.op.subprocess') as mock_subprocess:
         list_output = b'[{"overview":{"tags":["ANY_TEST_VALUE"]}}]'
         post_processed_list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
@@ -251,7 +280,7 @@ def test_op_lookup_no_field_value():
                                    input=post_processed_list_output)])
 
 
-def test_op_lookup_too_few_entries():
+def test_do_smart_lookups_too_few_entries():
     with patch('op_env.op.subprocess') as mock_subprocess:
         list_output = b"[]"
         mock_subprocess.check_output.return_value = list_output
@@ -262,7 +291,7 @@ def test_op_lookup_too_few_entries():
             assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'])
 
 
-def test_op_lookup_too_many_entries():
+def test_do_smart_lookups_too_many_entries():
     with patch('op_env.op.subprocess') as mock_subprocess:
         list_output = \
             b'[{"overview":{"tags":["ANY_TEST_VALUE"]}},{"overview":{"tags":["ANY_TEST_VALUE"]}}]'

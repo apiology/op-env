@@ -121,8 +121,11 @@ def _aliases(fields: List[FieldName]) -> List[FieldName]:
 
 
 def _op_consolidated_fields(env_var_names: Collection[EnvVarName]) -> Set[FieldName]:
-    # TODO: write tests until this is fully written out
-    return set(_op_fields_to_try(next(iter(env_var_names))))
+    return {
+        field_name
+        for env_var_name in env_var_names
+        for field_name in _op_fields_to_try(env_var_name)
+    }
 
 
 def _op_fields_to_try(env_var_name: EnvVarName) -> List[FieldName]:
