@@ -39,6 +39,10 @@ class NoFieldValueOPLookupError(OPLookupError):
     pass
 
 
+class InvalidTagOPLookupError(OPLookupError):
+    pass
+
+
 def _op_list_items(env_var_names: List[EnvVarName]) -> OpListItemsOpaqueOutput:
     list_command = ['op', 'list', 'items', '--tags',
                     ','.join(env_var_names)]
@@ -144,7 +148,14 @@ def _op_pluck_correct_field(env_var_name: EnvVarName,
                                     'one of these fields in 1Password.')
 
 
+def validate_env_var_names(env_var_names: List[EnvVarName]) -> None:
+    for env_var_name in env_var_names:
+        if ',' in env_var_name:
+            raise InvalidTagOPLookupError('1Password does not support tags with commas')
+
+
 def do_smart_lookups(env_var_names: List[EnvVarName]) -> Dict[str, str]:
+    validate_env_var_names(env_var_names)
     list_items_output = _op_list_items(env_var_names)
     all_fields_to_seek = _op_consolidated_fields(env_var_names)
     field_values_for_envvars = _op_get_item(list_items_output,

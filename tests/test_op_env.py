@@ -22,6 +22,7 @@ from op_env.op import (
     EnvVarName,
     FieldName,
     FieldValue,
+    InvalidTagOPLookupError,
     NoEntriesOPLookupError,
     NoFieldValueOPLookupError,
     TooManyEntriesOPLookupError,
@@ -273,7 +274,19 @@ def test_op_lookup_too_many_entries():
             assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'])
 
 
-# TODO: Test looking for field with a ',' in it
+def test_op_do_smart_lookups_comma_in_env():
+    with patch('op_env.op.subprocess') as mock_subprocess:
+        list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
+        get_output = b'{"any_test_value":"","password":"get_results","value":""}\n'
+        mock_subprocess.check_output.side_effect = [
+            list_output,
+            get_output,
+        ]
+        with pytest.raises(InvalidTagOPLookupError,
+                           match='1Password does not support tags with commas'):
+            do_smart_lookups(['ENV_WITH_,_IN_IT'])
+        mock_subprocess.check_output.assert_not_called()
+
 
 def test_op_do_smart_lookups_one_var():
     with patch('op_env.op.subprocess') as mock_subprocess:
