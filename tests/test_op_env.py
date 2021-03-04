@@ -253,14 +253,13 @@ def test_op_lookup_no_field_value():
                                    input=list_output)])
 
 
-@pytest.mark.skip(reason="refactoring")
 def test_op_lookup_too_few_entries():
     with patch('op_env.op.subprocess') as mock_subprocess:
         list_output = b"[]"
         mock_subprocess.check_output.return_value = list_output
         with pytest.raises(NoEntriesOPLookupError,
                            match='No 1Password entries with tag ANY_TEST_VALUE found'):
-            op_lookup('ANY_TEST_VALUE', field_name='abc')
+            do_smart_lookups(['ANY_TEST_VALUE'])
         mock_subprocess.check_output.\
             assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'])
 

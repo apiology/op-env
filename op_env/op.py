@@ -56,10 +56,13 @@ def _op_list_items(env_var_names: List[EnvVarName]) -> OpListItemsOpaqueOutput:
                                                   f"with tag {env_var_name} found")
             else:
                 by_env_var_name[env_var_name] = entry
-    return OpListItemsOpaqueOutput([
-        by_env_var_name[env_var_name]
-        for env_var_name in env_var_names
-    ])
+    ordered_list_items_data = []
+    for env_var_name in env_var_names:
+        if env_var_name not in by_env_var_name:
+            raise NoEntriesOPLookupError(f"No 1Password entries with tag {env_var_name} found")
+        else:
+            ordered_list_items_data.append(by_env_var_name[env_var_name])
+    return OpListItemsOpaqueOutput(ordered_list_items_data)
 
 # TODO: prefix op cli commands with _op_cli?  unclear what is what
 
