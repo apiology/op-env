@@ -39,9 +39,6 @@ class NoFieldValueOPLookupError(OPLookupError):
     pass
 
 
-# def op_smart_lookup(env_var_name: str) -> str:  # TODO most renamed to _op_pluck_correct_field
-
-
 def _op_list_items(env_var_names: List[EnvVarName]) -> OpListItemsOpaqueOutput:
     list_command = ['op', 'list', 'items', '--tags',
                     ','.join(env_var_names)]
@@ -63,8 +60,6 @@ def _op_list_items(env_var_names: List[EnvVarName]) -> OpListItemsOpaqueOutput:
         else:
             ordered_list_items_data.append(by_env_var_name[env_var_name])
     return OpListItemsOpaqueOutput(ordered_list_items_data)
-
-# TODO: prefix op cli commands with _op_cli?  unclear what is what
 
 
 def _op_get_item(list_items_output: OpListItemsOpaqueOutput,
@@ -108,30 +103,30 @@ def _op_get_item(list_items_output: OpListItemsOpaqueOutput,
 #     return get_output_str
 
 
-def last_underscored_component_lowercased(env_var_name: EnvVarName) -> FieldName:
+def _last_underscored_component_lowercased(env_var_name: EnvVarName) -> FieldName:
     components = env_var_name.split('_')
     return FieldName(components[-1].lower())
 
 
-def last_double_underscored_component_lowercased(env_var_name: EnvVarName) -> FieldName:
+def _last_double_underscored_component_lowercased(env_var_name: EnvVarName) -> FieldName:
     components = env_var_name.split('__')
     return FieldName(components[-1].lower())
 
 
-def all_lowercased(env_var_name: EnvVarName) -> FieldName:
+def _all_lowercased(env_var_name: EnvVarName) -> FieldName:
     return FieldName(env_var_name.lower())
 
 
 T = TypeVar('T')
 
 
-def uniqify(fields: Sequence[T]) -> List[T]:
+def _uniqify(fields: Sequence[T]) -> List[T]:
     "Removes duplicates but preserves order"
     # https://stackoverflow.com/questions/4459703/how-to-make-lists-contain-only-distinct-element-in-python
     return list(OrderedDict.fromkeys(fields))
 
 
-def aliases(fields: List[FieldName]) -> List[FieldName]:
+def _aliases(fields: List[FieldName]) -> List[FieldName]:
     if 'user' in fields:
         return [FieldName('username')]
     else:
@@ -144,12 +139,12 @@ def _op_consolidated_fields(env_var_names: Collection[EnvVarName]) -> Set[FieldN
 
 
 def _op_fields_to_try(env_var_name: EnvVarName) -> List[FieldName]:
-    candidates: List[FieldName] = uniqify([
-        all_lowercased(env_var_name),
-        last_double_underscored_component_lowercased(env_var_name),
-        last_underscored_component_lowercased(env_var_name),
+    candidates: List[FieldName] = _uniqify([
+        _all_lowercased(env_var_name),
+        _last_double_underscored_component_lowercased(env_var_name),
+        _last_underscored_component_lowercased(env_var_name),
     ])
-    return candidates + aliases(candidates) + [FieldName('password')]
+    return candidates + _aliases(candidates) + [FieldName('password')]
 
 
 def _op_pluck_correct_field(env_var_name: EnvVarName,
