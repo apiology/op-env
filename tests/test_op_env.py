@@ -234,23 +234,26 @@ def test_fields_to_try_simple():
         assert out == ['abc', 'password']
 
 
-@pytest.mark.skip(reason="refactoring")
 def test_op_lookup_no_field_value():
     with patch('op_env.op.subprocess') as mock_subprocess:
-        list_output = b"[{}]"
-        get_output = b"\n"
+        list_output = b'[{"overview":{"tags":["ANY_TEST_VALUE"]}}]'
+        post_processed_list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
+        get_output = b'{"password":""}\n'
         mock_subprocess.check_output.side_effect = [
             list_output,
             get_output,
         ]
         with pytest.raises(NoFieldValueOPLookupError,
-                           match=('1Passsword entry with tag '
-                                  'ANY_TEST_VALUE has no value for field abc')):
-            op_lookup('ANY_TEST_VALUE', field_name='abc')
+                           match=('1Passsword entry with tag ANY_TEST_VALUE '
+                                  'has no value for the fields tried: '
+                                  'any_test_value, value, password.  '
+                                  'Please populate one of these fields in 1Password.')):
+            do_smart_lookups(['ANY_TEST_VALUE'])
         mock_subprocess.check_output.\
             assert_has_calls([call(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE']),
-                              call(['op', 'get', 'item', '-', '--fields', 'abc'],
-                                   input=list_output)])
+                              call(['op', 'get', 'item', '-', '--fields',
+                                    'any_test_value,password,value'],
+                                   input=post_processed_list_output)])
 
 
 def test_op_lookup_too_few_entries():
