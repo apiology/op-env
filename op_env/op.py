@@ -48,16 +48,14 @@ def _op_list_items(env_var_names: List[EnvVarName]) -> OpListItemsOpaqueOutput:
     list_items_json_docs_bytes = subprocess.check_output(list_command)
     # list_items_json_docs_str = list_items_json_docs_bytes.decode('utf-8')
     list_items_data: List[OpListItemsEntry] = json.loads(list_items_json_docs_bytes)
-    print(f"list_items_data: {list_items_data}")
     by_env_var_name: Dict[EnvVarName, OpListItemsEntry] = {}
     for entry in list_items_data:
         for env_var_name in entry['overview']['tags']:
-            if 'env_var_name' in by_env_var_name:
+            if env_var_name in by_env_var_name:
                 raise TooManyEntriesOPLookupError("Too many 1Password entries "
                                                   f"with tag {env_var_name} found")
             else:
                 by_env_var_name[env_var_name] = entry
-
     return OpListItemsOpaqueOutput([
         by_env_var_name[env_var_name]
         for env_var_name in env_var_names

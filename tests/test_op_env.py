@@ -265,7 +265,6 @@ def test_op_lookup_too_few_entries():
             assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'])
 
 
-@pytest.mark.skip(reason="refactoring")
 def test_op_lookup_too_many_entries():
     with patch('op_env.op.subprocess') as mock_subprocess:
         list_output = \
