@@ -279,11 +279,10 @@ def test_op_lookup_too_many_entries():
 
 # TODO: Test looking for field with a ',' in it
 
-@pytest.mark.skip(reason="refactoring")
 def test_op_do_smart_lookups_one_var():
     with patch('op_env.op.subprocess') as mock_subprocess:
-        list_output = b"[{}]"
-        get_output = b"get_results\n"
+        list_output = b'[{}]'
+        get_output = b'{"any_test_value":"","password":"get_results","value":""}\n'
         mock_subprocess.check_output.side_effect = [
             list_output,
             get_output,

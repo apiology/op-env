@@ -49,16 +49,27 @@ def _op_list_items(env_var_names: List[EnvVarName]) -> OpListItemsOpaqueOutput:
 
 
 def _op_get_item(list_items_output: OpListItemsOpaqueOutput,
-                 env_var_names: Collection[EnvVarName],
+                 env_var_names: List[EnvVarName],
                  all_fields_to_seek: Collection[FieldName]) ->\
                  Dict[EnvVarName, Dict[FieldName, FieldValue]]:
     sorted_fields_to_seek = sorted(all_fields_to_seek)
     get_command: List[str] = ['op', 'get', 'item', '-', '--fields',
                               ','.join(sorted_fields_to_seek)]
     list_items_output_raw = json.dumps(list_items_output).encode('utf-8')
-    out = subprocess.check_output(get_command, input=list_items_output_raw)
-    # TODO: Write tests until this is written out
-    return {}
+    field_values_json_docs_bytes = subprocess.check_output(get_command,
+                                                           input=list_items_output_raw)
+    field_values_json_docs_str = field_values_json_docs_bytes.decode('utf-8')
+    field_values_data = [
+        json.loads(field_values_json)
+        for field_values_json
+        in field_values_json_docs_str.split('\n')
+        if field_values_json != ''
+    ]
+    return {
+        env_var_name: field_values
+        for (env_var_name, field_values)
+        in zip(env_var_names, field_values_data)
+    }
 
 
 # TODO moved to op_get_item()
