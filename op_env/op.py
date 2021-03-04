@@ -86,23 +86,6 @@ def _op_get_item(list_items_output: OpListItemsOpaqueOutput,
     }
 
 
-# TODO moved to op_get_item()
-# def _op_get_item_fields(list_output: bytes, field_name: FieldName = 'password') -> bytes:
-
-
-# TODO is this needed anymore?  Is all functionality still tested and there?
-# def op_lookup(env_var_name: str, field_name: str = 'password') -> str:
-#     # https://stackoverflow.com/questions/13332268/how-to-use-subprocess-command-with-pipes
-#     list_output_data = _op_list_items(env_var_name)
-#     list_output = json.dumps(list_output_data).encode('utf-8')
-#     get_output = _op_get_item_fields(list_output, field_name)
-#     get_output_str = get_output.decode('utf-8').rstrip('\n')
-#     if get_output_str == '':
-#         raise NoFieldValueOPLookupError('1Passsword entry with tag '
-#                                         f'{env_var_name} has no value for field {field_name}')
-#     return get_output_str
-
-
 def _last_underscored_component_lowercased(env_var_name: EnvVarName) -> FieldName:
     components = env_var_name.split('_')
     return FieldName(components[-1].lower())
