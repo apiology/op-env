@@ -7,19 +7,24 @@ import io
 import os
 import subprocess
 import tempfile
+from typing import Dict
 from unittest.mock import call, patch
 
 import pytest
 import yaml
 
 
-from op_env._cli import parse_argv, process_args
+from op_env._cli import Arguments, parse_argv, process_args
 from op_env.op import (
+    do_smart_lookups,
     _op_fields_to_try,
+    _op_pluck_correct_field,
+    EnvVarName,
+    FieldName,
+    FieldValue,
+    InvalidTagOPLookupError,
     NoEntriesOPLookupError,
     NoFieldValueOPLookupError,
-    op_lookup,
-    op_smart_lookup,
     TooManyEntriesOPLookupError,
 )
 
@@ -92,41 +97,58 @@ def two_item_yaml_file():
         yield yaml_file.name
 
 
-def test_process_args_shows_json_with_simple_env():
-    with patch('op_env._cli.op_smart_lookup') as mock_op_lookup,\
+def test_process_args_shows_json_with_simple_env() -> None:
+    with patch('op_env.op._op_list_items') as mock_op_list_items,\
+         patch('op_env.op._op_consolidated_fields') as mock_op_consolidated_fields,\
+         patch('op_env.op._op_get_item') as mock_op_get_item,\
+         patch('op_env.op._op_pluck_correct_field') as mock_op_pluck_correct_field,\
          patch('sys.stdout', new_callable=io.StringIO) as stdout_stringio:
-        args = {'operation': 'json', 'environment': ['a']}
-        mock_op_lookup.return_value = "1"
+        mock_list_items_output = mock_op_list_items.return_value
+        mock_all_fields_to_seek = mock_op_consolidated_fields.return_value
+        Dict[EnvVarName, Dict[FieldName, FieldValue]]
+        retval: Dict[EnvVarName, Dict[FieldName, FieldValue]] = {
+            EnvVarName('a'): {
+                FieldName('password'): FieldValue('1'),
+            }}
+        mock_op_get_item.return_value = retval
+        env_var_names = [EnvVarName('a')]
+        args: Arguments = {
+            'operation': 'json',
+            'environment': env_var_names,
+            'command': []
+        }
+        mock_op_pluck_correct_field.return_value = '1'
         process_args(args)
         assert stdout_stringio.getvalue() == '{"a": "1"}\n'
-        mock_op_lookup.assert_called_with('a')
+        mock_op_list_items.assert_called_with(env_var_names)
+        mock_op_consolidated_fields.assert_called_with(env_var_names)
+        mock_op_pluck_correct_field.assert_called_with('a', {'password': '1'})
+        mock_op_get_item.assert_called_with(mock_list_items_output,
+                                            env_var_names,
+                                            mock_all_fields_to_seek)
 
 
 def test_process_args_runs_simple_command_with_simple_env():
     with patch('op_env._cli.subprocess') as mock_subprocess,\
-         patch('op_env._cli.op_smart_lookup') as mock_op_lookup,\
+         patch('op_env._cli.do_smart_lookups') as mock_do_smart_lookups,\
          patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True):
         command = ['env']
         args = {'operation': 'run', 'command': command,
                 'environment': ['a']}
+        mock_do_smart_lookups.return_value = {'a': '1'}
         process_args(args)
-        mock_op_lookup.assert_called_with('a')
+        mock_do_smart_lookups.assert_called_with(['a'])
         mock_subprocess.check_call.assert_called_with(command,
-                                                      env={'a': mock_op_lookup.return_value,
+                                                      env={'a': '1',
                                                            'ORIGINAL_ENV': 'TRUE'})
 
 
 def test_process_args_shows_env_with_variables_needing_escape():
-    def fake_op_smart_lookup(k):
-        return {
-            'a': "'",
-            'c': 'd',
-         }[k]
-
-    with patch('op_env._cli.op_smart_lookup', new=fake_op_smart_lookup),\
+    with patch('op_env._cli.do_smart_lookups') as mock_do_smart_lookups,\
          patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True),\
          patch('sys.stdout', new_callable=io.StringIO) as stdout_stringio:
         args = {'operation': 'sh', 'environment': ['a', 'c']}
+        mock_do_smart_lookups.return_value = {'a': "'", 'c': 'd'}
         process_args(args)
         assert stdout_stringio.getvalue() == 'a=\'\'"\'"\'\'; export a\nc=d; export c\n'
 
@@ -138,25 +160,26 @@ def test_process_args_shows_env_with_multiple_variables():
             'c': 'd',
          }[k]
 
-    with patch('op_env._cli.op_smart_lookup', new=fake_op_smart_lookup),\
+    with patch('op_env._cli.do_smart_lookups') as mock_do_smart_lookups,\
          patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True),\
          patch('sys.stdout', new_callable=io.StringIO) as stdout_stringio:
+        mock_do_smart_lookups.return_value = {'a': 'b', 'c': 'd'}
         args = {'operation': 'sh', 'environment': ['a', 'c']}
         process_args(args)
         assert stdout_stringio.getvalue() == 'a=b; export a\nc=d; export c\n'
 
 
 def test_process_args_shows_env_with_simple_env():
-    with patch('op_env._cli.op_smart_lookup') as mock_op_lookup,\
+    with patch('op_env._cli.do_smart_lookups') as mock_do_smart_lookups,\
          patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True),\
          patch('sys.stdout', new_callable=io.StringIO) as stdout_stringio:
-        mock_op_lookup.return_value = 'b'
+        mock_do_smart_lookups.return_value = {'a': 'b'}
         args = {'operation': 'sh', 'environment': ['a']}
         process_args(args)
         assert stdout_stringio.getvalue() == 'a=b; export a\n'
-        mock_op_lookup.assert_called_with('a')
 
 
+@pytest.mark.skip(reason="need to mock op binary in test PATH")
 def test_process_args_runs_simple_command():
     with patch('op_env._cli.subprocess') as mock_subprocess,\
          patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True):
@@ -206,123 +229,154 @@ def test_fields_to_try_simple():
         assert out == ['abc', 'password']
 
 
-def test_op_lookup_no_field_value():
+def test_op_do_smart_lookups_multiple_entries():
     with patch('op_env.op.subprocess') as mock_subprocess:
-        list_output = b"[{}]"
-        get_output = b"\n"
+        list_output = \
+            b'[{"overview":{"tags":["ANY_TEST_VALUE"]}},' \
+            b'{"overview": {"tags": ["ANOTHER_TEST_VALUE"]}}]'
+        post_processed_list_output = \
+            b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}, ' \
+            b'{"overview": {"tags": ["ANOTHER_TEST_VALUE"]}}]'
+        get_output = \
+            b'{"any_test_value":"","another_test_value":"","password":"any","value":""}\n' \
+            b'{"any_test_value":"","another_test_value":"another",'\
+            b'"password":"get_results","value":""}'
+        mock_subprocess.check_output.side_effect = [
+            list_output,
+            get_output,
+        ]
+        out = do_smart_lookups(['ANY_TEST_VALUE', 'ANOTHER_TEST_VALUE'])
+        mock_subprocess.check_output.\
+            assert_has_calls([call(['op', 'list', 'items', '--tags',
+                                    'ANY_TEST_VALUE,ANOTHER_TEST_VALUE']),
+                              call(['op', 'get', 'item', '-', '--fields',
+                                    'another_test_value,any_test_value,password,value'],
+                                   input=post_processed_list_output)])
+        assert out == {
+            'ANY_TEST_VALUE': 'any',
+            'ANOTHER_TEST_VALUE': 'another'
+        }
+
+
+def test_do_smart_lookups_no_field_value():
+    with patch('op_env.op.subprocess') as mock_subprocess:
+        list_output = b'[{"overview":{"tags":["ANY_TEST_VALUE"]}}]'
+        post_processed_list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
+        get_output = b'{"password":""}\n'
         mock_subprocess.check_output.side_effect = [
             list_output,
             get_output,
         ]
         with pytest.raises(NoFieldValueOPLookupError,
-                           match=('1Passsword entry with tag '
-                                  'ANY_TEST_VALUE has no value for field abc')):
-            op_lookup('ANY_TEST_VALUE', field_name='abc')
+                           match=('1Passsword entry with tag ANY_TEST_VALUE '
+                                  'has no value for the fields tried: '
+                                  'any_test_value, value, password.  '
+                                  'Please populate one of these fields in 1Password.')):
+            do_smart_lookups(['ANY_TEST_VALUE'])
         mock_subprocess.check_output.\
             assert_has_calls([call(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE']),
-                              call(['op', 'get', 'item', '-', '--fields', 'abc'],
-                                   input=list_output)])
+                              call(['op', 'get', 'item', '-', '--fields',
+                                    'any_test_value,password,value'],
+                                   input=post_processed_list_output)])
 
 
-def test_op_lookup_too_few_entries():
+def test_do_smart_lookups_too_few_entries():
     with patch('op_env.op.subprocess') as mock_subprocess:
         list_output = b"[]"
         mock_subprocess.check_output.return_value = list_output
         with pytest.raises(NoEntriesOPLookupError,
                            match='No 1Password entries with tag ANY_TEST_VALUE found'):
-            op_lookup('ANY_TEST_VALUE', field_name='abc')
+            do_smart_lookups(['ANY_TEST_VALUE'])
         mock_subprocess.check_output.\
             assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'])
 
 
-def test_op_lookup_too_many_entries():
+def test_do_smart_lookups_too_many_entries():
     with patch('op_env.op.subprocess') as mock_subprocess:
-        list_output = b"[{}, {}]"
+        list_output = \
+            b'[{"overview":{"tags":["ANY_TEST_VALUE"]}},{"overview":{"tags":["ANY_TEST_VALUE"]}}]'
         mock_subprocess.check_output.return_value = list_output
         with pytest.raises(TooManyEntriesOPLookupError,
                            match='Too many 1Password entries with tag ANY_TEST_VALUE'):
-            op_lookup('ANY_TEST_VALUE', field_name='abc')
+            do_smart_lookups(['ANY_TEST_VALUE'])
         mock_subprocess.check_output.\
             assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'])
 
 
-def test_op_lookup_specific_field():
+def test_op_do_smart_lookups_comma_in_env():
     with patch('op_env.op.subprocess') as mock_subprocess:
-        list_output = b"[{}]"
-        get_output = b"get_results\n"
+        list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
+        get_output = b'{"any_test_value":"","password":"get_results","value":""}\n'
         mock_subprocess.check_output.side_effect = [
             list_output,
             get_output,
         ]
-        out = op_lookup('ANY_TEST_VALUE', field_name='abc')
+        with pytest.raises(InvalidTagOPLookupError,
+                           match='1Password does not support tags with commas'):
+            do_smart_lookups(['ENV_WITH_,_IN_IT'])
+        mock_subprocess.check_output.assert_not_called()
+
+
+def test_op_do_smart_lookups_one_var():
+    with patch('op_env.op.subprocess') as mock_subprocess:
+        list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
+        get_output = b'{"any_test_value":"","password":"get_results","value":""}\n'
+        mock_subprocess.check_output.side_effect = [
+            list_output,
+            get_output,
+        ]
+        out = do_smart_lookups(['ANY_TEST_VALUE'])
         mock_subprocess.check_output.\
             assert_has_calls([call(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE']),
-                              call(['op', 'get', 'item', '-', '--fields', 'abc'],
+                              call(['op', 'get', 'item', '-', '--fields',
+                                    'any_test_value,password,value'],
                                    input=list_output)])
-        assert out == "get_results"
+        assert out == {'ANY_TEST_VALUE': 'get_results'}
 
 
-def test_op_smart_lookup_multiple_fields():
-    with patch('op_env.op.op_lookup') as mock_op_lookup,\
-         patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
+def test_op_pluck_correct_field_multiple_fields():
+    with patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle', 'blah']
-        mock_op_lookup.return_value = 'result value'
-        ret = op_smart_lookup('ENVVARNAME')
+        ret = _op_pluck_correct_field('ENVVARNAME', {'blah': '', 'floogle': 'result value'})
         mock_op_fields_to_try.assert_called_with('ENVVARNAME')
-        mock_op_lookup.assert_called_with('ENVVARNAME', field_name='floogle')
         assert ret == 'result value'
 
 
-def test_op_smart_lookup_multiple_fields_all_errors():
-    with patch('op_env.op.op_lookup') as mock_op_lookup,\
-         patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
+def test_op_pluck_correct_field_multiple_fields_all_errors():
+    with patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle', 'blah']
-        mock_op_lookup.side_effect = [NoFieldValueOPLookupError,
-                                      NoFieldValueOPLookupError]
         with pytest.raises(NoFieldValueOPLookupError,
                            match=('1Passsword entry with tag '
                                   'ENVVARNAME has no value for '
                                   'the fields tried: '
                                   "floogle, blah.  Please populate "
                                   'one of these fields in 1Password.')):
-            op_smart_lookup('ENVVARNAME')
+            _op_pluck_correct_field('ENVVARNAME', {'floogle': '', 'blah': ''})
         mock_op_fields_to_try.assert_called_with('ENVVARNAME')
-        mock_op_lookup.assert_has_calls([call('ENVVARNAME', field_name='floogle'),
-                                         call('ENVVARNAME', field_name='blah')])
 
 
-def test_op_smart_lookup_single_field_with_error():
-    with patch('op_env.op.op_lookup') as mock_op_lookup,\
-         patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
+def test_op_pluck_correct_field_single_field_with_error():
+    with patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle']
-        mock_op_lookup.side_effect = NoFieldValueOPLookupError
         with pytest.raises(NoFieldValueOPLookupError):
-            op_smart_lookup('ENVVARNAME')
+            _op_pluck_correct_field('ENVVARNAME', {'floogle': ''})
         mock_op_fields_to_try.assert_called_with('ENVVARNAME')
-        mock_op_lookup.assert_called_with('ENVVARNAME', field_name='floogle')
 
 
-def test_op_smart_lookup_multiple_fields_chooses_second():
-    with patch('op_env.op.op_lookup') as mock_op_lookup,\
-         patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
+def test_op_pluck_correct_field_multiple_fields_chooses_second():
+    with patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle', 'blah']
-        mock_op_lookup.side_effect = [NoFieldValueOPLookupError,
-                                      'result value']
-        ret = op_smart_lookup('ENVVARNAME')
+        ret = _op_pluck_correct_field('ENVVARNAME', {'floogle': '', 'blah': 'result value'})
         mock_op_fields_to_try.assert_called_with('ENVVARNAME')
-        mock_op_lookup.assert_has_calls([call('ENVVARNAME', field_name='floogle'),
-                                         call('ENVVARNAME', field_name='blah')])
         assert ret == 'result value'
 
 
-def test_op_smart_lookup_chooses_first():
-    with patch('op_env.op.op_lookup') as mock_op_lookup,\
-         patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
+def test_op_pluck_correct_field_chooses_first():
+    with patch('op_env.op._op_fields_to_try') as mock_op_fields_to_try:
         mock_op_fields_to_try.return_value = ['floogle']
-        ret = op_smart_lookup('ENVVARNAME')
+        ret = _op_pluck_correct_field('ENVVARNAME', {'floogle': 'myvalue'})
         mock_op_fields_to_try.assert_called_with('ENVVARNAME')
-        mock_op_lookup.assert_called_with('ENVVARNAME', field_name='floogle')
-        assert ret == mock_op_lookup.return_value
+        assert ret == 'myvalue'
 
 
 def test_parse_args_json_operation_no_env_variables():

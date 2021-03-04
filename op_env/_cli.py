@@ -5,17 +5,17 @@ import os
 import pipes
 import subprocess
 import sys
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, List, Optional, Sequence, Union
 
 from typing_extensions import TypedDict
 import yaml
 
-from .op import op_smart_lookup
+from .op import do_smart_lookups, EnvVarName
 
 
 class Arguments(TypedDict):
     operation: str
-    environment: List[str]
+    environment: List[EnvVarName]
     command: List[str]
 
 
@@ -83,13 +83,6 @@ def parse_argv(argv: List[str]) -> Arguments:
                                       description=sh_desc)
     add_environment_arguments(sh_parser)
     return vars(parser.parse_args(argv[1:]))  # type: ignore
-
-
-def do_smart_lookups(envvars: List[str]) -> Dict[str, str]:
-    return {
-        envvar: op_smart_lookup(envvar)
-        for envvar in envvars
-    }
 
 
 def process_args(args: Arguments) -> int:
