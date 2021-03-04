@@ -268,11 +268,12 @@ def test_op_lookup_too_few_entries():
 @pytest.mark.skip(reason="refactoring")
 def test_op_lookup_too_many_entries():
     with patch('op_env.op.subprocess') as mock_subprocess:
-        list_output = b"[{}, {}]"
+        list_output = \
+            b'[{"overview":{"tags":["ANY_TEST_VALUE"]}},{"overview":{"tags":["ANY_TEST_VALUE"]}}]'
         mock_subprocess.check_output.return_value = list_output
         with pytest.raises(TooManyEntriesOPLookupError,
                            match='Too many 1Password entries with tag ANY_TEST_VALUE'):
-            op_lookup('ANY_TEST_VALUE', field_name='abc')
+            do_smart_lookups(['ANY_TEST_VALUE'])
         mock_subprocess.check_output.\
             assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'])
 
@@ -281,7 +282,7 @@ def test_op_lookup_too_many_entries():
 
 def test_op_do_smart_lookups_one_var():
     with patch('op_env.op.subprocess') as mock_subprocess:
-        list_output = b'[{}]'
+        list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
         get_output = b'{"any_test_value":"","password":"get_results","value":""}\n'
         mock_subprocess.check_output.side_effect = [
             list_output,

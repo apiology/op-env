@@ -3,9 +3,20 @@ import json
 import subprocess
 from typing import Any, Collection, Dict, List, NewType, Sequence, Set, TypeVar
 
-OpListItemsOpaqueOutput = NewType('OpListItemsOpaqueOutput', List[Any])
+from typing_extensions import TypedDict
 
 EnvVarName = NewType('EnvVarName', str)
+
+
+class OpListItemsEntryOverview(TypedDict, total=False):
+    tags: List[EnvVarName]
+
+
+class OpListItemsEntry(TypedDict, total=False):
+    overview: OpListItemsEntryOverview
+
+
+OpListItemsOpaqueOutput = NewType('OpListItemsOpaqueOutput', List[Any])
 
 FieldName = NewType('FieldName', str)
 
@@ -34,22 +45,29 @@ class NoFieldValueOPLookupError(OPLookupError):
 def _op_list_items(env_var_names: List[EnvVarName]) -> OpListItemsOpaqueOutput:
     list_command = ['op', 'list', 'items', '--tags',
                     ','.join(env_var_names)]
-    list_output = subprocess.check_output(list_command)
-    list_output_data = json.loads(list_output)
-    assert isinstance(list_output_data, list)
-    # TODO: Test this - probably look inside data to see if it was found?
-    # if len(list_output_data) == 0:
-    #     raise NoEntriesOPLookupError(f"No 1Password entries with tag {env_var_name} found")
-    # if len(list_output_data) > 1:
-    #     raise TooManyEntriesOPLookupError("Too many 1Password entries "
-    #                                       f"with tag {env_var_name} found")
-    return OpListItemsOpaqueOutput(list_output_data)
+    list_items_json_docs_bytes = subprocess.check_output(list_command)
+    # list_items_json_docs_str = list_items_json_docs_bytes.decode('utf-8')
+    list_items_data: List[OpListItemsEntry] = json.loads(list_items_json_docs_bytes)
+    print(f"list_items_data: {list_items_data}")
+    by_env_var_name: Dict[EnvVarName, OpListItemsEntry] = {}
+    for entry in list_items_data:
+        for env_var_name in entry['overview']['tags']:
+            if 'env_var_name' in by_env_var_name:
+                raise TooManyEntriesOPLookupError("Too many 1Password entries "
+                                                  f"with tag {env_var_name} found")
+            else:
+                by_env_var_name[env_var_name] = entry
+
+    return OpListItemsOpaqueOutput([
+        by_env_var_name[env_var_name]
+        for env_var_name in env_var_names
+    ])
 
 # TODO: prefix op cli commands with _op_cli?  unclear what is what
 
 
 def _op_get_item(list_items_output: OpListItemsOpaqueOutput,
-                 env_var_names: List[EnvVarName],
+                 env_var_names: Collection[EnvVarName],
                  all_fields_to_seek: Collection[FieldName]) ->\
                  Dict[EnvVarName, Dict[FieldName, FieldValue]]:
     sorted_fields_to_seek = sorted(all_fields_to_seek)
