@@ -111,8 +111,7 @@ Tips
 
 To run a subset of tests::
 
-$ pytest tests.test_op_env
-
+    $ pytest tests.test_op_env
 
 Deploying
 ---------
