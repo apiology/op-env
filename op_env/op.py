@@ -164,3 +164,15 @@ def _op_pluck_correct_field(env_var_name: EnvVarName,
                                     'the fields tried: '
                                     f'{", ".join(fields)}.  Please populate '
                                     'one of these fields in 1Password.')
+
+
+def do_smart_lookups(env_var_names: List[EnvVarName]) -> Dict[str, str]:
+    list_items_output = _op_list_items(env_var_names)
+    all_fields_to_seek = _op_consolidated_fields(env_var_names)
+    field_values_for_envvars = _op_get_item(list_items_output,
+                                            env_var_names,
+                                            all_fields_to_seek)
+    return {
+        env_var_name: _op_pluck_correct_field(env_var_name, field_values_for_envvars[env_var_name])
+        for env_var_name in field_values_for_envvars
+    }

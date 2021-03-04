@@ -14,8 +14,9 @@ import pytest
 import yaml
 
 
-from op_env._cli import Arguments, do_smart_lookups, parse_argv, process_args
+from op_env._cli import Arguments, parse_argv, process_args
 from op_env.op import (
+    do_smart_lookups,
     _op_fields_to_try,
     _op_pluck_correct_field,
     EnvVarName,
@@ -23,8 +24,6 @@ from op_env.op import (
     FieldValue,
     NoEntriesOPLookupError,
     NoFieldValueOPLookupError,
-    # op_lookup, # TODO
-    # op_smart_lookup, # TODO
     TooManyEntriesOPLookupError,
 )
 
@@ -98,10 +97,10 @@ def two_item_yaml_file():
 
 
 def test_process_args_shows_json_with_simple_env() -> None:
-    with patch('op_env._cli._op_list_items') as mock_op_list_items,\
-         patch('op_env._cli._op_consolidated_fields') as mock_op_consolidated_fields,\
-         patch('op_env._cli._op_get_item') as mock_op_get_item,\
-         patch('op_env._cli._op_pluck_correct_field') as mock_op_pluck_correct_field,\
+    with patch('op_env.op._op_list_items') as mock_op_list_items,\
+         patch('op_env.op._op_consolidated_fields') as mock_op_consolidated_fields,\
+         patch('op_env.op._op_get_item') as mock_op_get_item,\
+         patch('op_env.op._op_pluck_correct_field') as mock_op_pluck_correct_field,\
          patch('sys.stdout', new_callable=io.StringIO) as stdout_stringio:
         mock_list_items_output = mock_op_list_items.return_value
         mock_all_fields_to_seek = mock_op_consolidated_fields.return_value
