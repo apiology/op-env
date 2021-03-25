@@ -5,7 +5,10 @@
 import pytest
 
 # from op_env import op_env
-
+import argparse
+import subprocess
+from unittest.mock import patch, call
+from op_env.cli import process_args, parse_argv
 
 
 @pytest.fixture
@@ -25,14 +28,15 @@ def test_content(response):
 
 
 def test_process_args():
-    args = '<fake>'
     with patch('builtins.print') as mock_print:
-        out = process_args()
+        ns = argparse.Namespace()
+        setattr(ns, '_', '<fake>')
+        out = process_args(ns)
 
         assert out == 0
-        mock_print.assert_called_with('Arguments: <fake>')
-        mock_print.assert_called_with('Replace this message by putting '
-                                      'your code into op_env.cli.process_args')
+        mock_print.assert_has_calls([call('Arguments: <fake>'),
+                                     call('Replace this message by putting '
+                                          'your code into python_boilerplate.cli.process_args')])
 
 
 def test_parse_argv_run_simple():
