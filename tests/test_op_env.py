@@ -2,13 +2,13 @@
 
 """Tests for `op_env` package."""
 
-import pytest
-
 # from op_env import op_env
 import argparse
 import subprocess
-from unittest.mock import patch, call
-from op_env.cli import process_args, parse_argv
+from unittest.mock import call, patch
+
+import pytest
+from op_env.cli import parse_argv, process_args
 
 
 @pytest.fixture
