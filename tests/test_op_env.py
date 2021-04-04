@@ -36,20 +36,22 @@ def test_process_args():
         assert out == 0
         mock_print.assert_has_calls([call('Arguments: <fake>'),
                                      call('Replace this message by putting '
-                                          'your code into python_boilerplate.cli.process_args')])
+                                          'your code into op_env.cli.process_args')])
 
 
+# @pytest.mark.skip(reason="working on main help test first")
 def test_parse_argv_run_simple():
-    argv = ['op_env', 'whatever']
+    argv = ['op_env', 'op1', '123']
     args = parse_argv(argv)
-    assert vars(args) == {'_': ['whatever']}
+    assert vars(args) == {'operation': 'op1', 'arg1': 123}
 
 
 def test_cli_help():
-    expected_help = """usage: op_env [-h] [_ ...]
+    expected_help = """usage: op_env [-h] {op1} ...
 
 positional arguments:
-  _
+  {op1}
+    op1       Do some kind of operation
 
 optional arguments:
   -h, --help  show this help message and exit
@@ -57,4 +59,7 @@ optional arguments:
     # older python versions show arguments like this:
     alt_expected_help = expected_help.replace('[_ ...]', '[_ [_ ...]]')
     actual_help = subprocess.check_output(['op_env', '--help']).decode('utf-8')
-    assert actual_help in [expected_help, alt_expected_help]
+    try:
+        assert actual_help == expected_help
+    except AssertionError:
+        assert actual_help == alt_expected_help
