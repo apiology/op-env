@@ -16,9 +16,9 @@ import yaml
 
 from op_env._cli import Arguments, parse_argv, process_args
 from op_env.op import (
-    do_smart_lookups,
     _op_fields_to_try,
     _op_pluck_correct_field,
+    do_smart_lookups,
     EnvVarName,
     FieldName,
     FieldValue,
