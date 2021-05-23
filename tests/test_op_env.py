@@ -4,10 +4,12 @@
 
 # from op_env import op_env
 import argparse
+import os
 import subprocess
 from unittest.mock import call, patch
 
 import pytest
+
 from op_env.cli import parse_argv, process_args
 
 
@@ -46,7 +48,32 @@ def test_parse_argv_run_simple():
     assert vars(args) == {'operation': 'op1', 'arg1': 123}
 
 
+def test_cli_op1_help():
+    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
+    env = {}
+    env.update(os.environ)
+    env.update(request_long_lines)
+    expected_help = """usage: op_env op1 [-h] arg1
+
+Do some kind of operation
+
+positional arguments:
+  arg1        arg1 help
+
+optional arguments:
+  -h, --help  show this help message and exit
+"""
+    # older python versions show arguments like this:
+    actual_help = subprocess.check_output(['op_env', 'op1', '--help'],
+                                          env=env).decode('utf-8')
+    assert actual_help == expected_help
+
+
 def test_cli_help():
+    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
+    env = {}
+    env.update(os.environ)
+    env.update(request_long_lines)
     expected_help = """usage: op_env [-h] {op1} ...
 
 positional arguments:
@@ -57,9 +84,6 @@ optional arguments:
   -h, --help  show this help message and exit
 """
     # older python versions show arguments like this:
-    alt_expected_help = expected_help.replace('[_ ...]', '[_ [_ ...]]')
-    actual_help = subprocess.check_output(['op_env', '--help']).decode('utf-8')
-    try:
-        assert actual_help == expected_help
-    except AssertionError:
-        assert actual_help == alt_expected_help
+    actual_help = subprocess.check_output(['op_env', '--help'],
+                                          env=env).decode('utf-8')
+    assert actual_help == expected_help
