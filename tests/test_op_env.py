@@ -592,6 +592,10 @@ op-env: error: the following arguments are required: operation
 
 def test_cli_help():
     expected_help = """usage: op-env [-h] {run,json,sh} ...
+    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
+    env = {}
+    env.update(os.environ)
+    env.update(request_long_lines)
 
 positional arguments:
   {run,json,sh}
