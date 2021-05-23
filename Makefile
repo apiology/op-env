@@ -27,7 +27,7 @@ help:
 default: typecheck test ## run default typechecking and tests
 
 typecheck: ## run mypy against project
-	mypy .
+	dmypy --status-file /tmp/.dmypy.json run *.py tests op_env
 
 clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
 
@@ -51,7 +51,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 requirements_dev.txt.installed: requirements_dev.txt
-	pip install -q --disable-pip-version-check -r requirements_dev.txt
+	pip install --disable-pip-version-check -r requirements_dev.txt -e .
 	touch requirements_dev.txt.installed
 
 pip_install: requirements_dev.txt.installed ## Install Python dependencies
