@@ -42,7 +42,7 @@ class AppendListFromYAMLAction(argparse.Action):
         envvars.extend(variables_from_yaml)
 
 
-def add_environment_arguments(arg_parser: argparse.ArgumentParser):
+def add_environment_arguments(arg_parser: argparse.ArgumentParser) -> None:
     arg_parser.add_argument('--environment', '-e',
                             metavar='ENVVAR',
                             action='append',

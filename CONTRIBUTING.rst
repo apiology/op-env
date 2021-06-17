@@ -80,7 +80,7 @@ Ready to contribute? Here's how to set up `op_env` for local development.
    tests, including testing other Python versions with tox::
 
     $ flake8 op_env tests
-    $ python setup.py test or pytest
+    $ make test
     $ tox
 
    To get flake8 and tox, just pip install them into your virtualenv.
