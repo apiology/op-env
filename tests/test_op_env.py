@@ -6,6 +6,7 @@
 import argparse
 import os
 import subprocess
+import sys
 from unittest.mock import call, patch
 
 import pytest
@@ -72,7 +73,10 @@ positional arguments:
 options:
   -h, --help  show this help message and exit
 """
-    # older python versions show arguments like this:
+    if sys.version_info <= (3, 10):
+        # 3.10 changed the wording a bit
+        expected_help = expected_help.replace('options:', 'optional arguments:')
+
     actual_help = subprocess.check_output(['op_env', 'op1', '--help'],
                                           env=env).decode('utf-8')
     assert actual_help == expected_help
@@ -86,7 +90,6 @@ def test_cli_no_command():
     expected_help = """usage: op_env [-h] {op1} ...
 op_env: error: Please provide a command
 """
-    # older python versions show arguments like this:
     result = subprocess.run(['op_env'],
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
@@ -109,7 +112,10 @@ positional arguments:
 options:
   -h, --help  show this help message and exit
 """
-    # older python versions show arguments like this:
+    if sys.version_info <= (3, 10):
+        # 3.10 changed the wording a bit
+        expected_help = expected_help.replace('options:', 'optional arguments:')
+
     actual_help = subprocess.check_output(['op_env', '--help'],
                                           env=env).decode('utf-8')
     assert actual_help == expected_help
