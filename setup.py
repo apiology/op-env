@@ -110,6 +110,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
     description="op-env allows you to use 1Password entries as environment variable-style secrets",  # noqa: E501
     entry_points={
