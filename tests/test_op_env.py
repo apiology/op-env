@@ -6,6 +6,7 @@ import argparse
 import io
 import os
 import subprocess
+import sys
 import tempfile
 from typing import Dict
 from unittest.mock import call, patch
@@ -540,6 +541,10 @@ options:
 
 
 def test_cli_help_json():
+    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
+    env = {}
+    env.update(os.environ)
+    env.update(request_long_lines)
     expected_help = """usage: op-env json [-h] [--environment ENVVAR] [--yaml-environment YAMLENV]
 
 Produce simple JSON on stdout mapping requested env variables to values
@@ -551,17 +556,20 @@ options:
   --yaml-environment YAMLENV, -y YAMLENV
                         YAML config specifying a list of environment variable names to set
 """
-    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
-    env = {}
-    env.update(os.environ)
-    env.update(request_long_lines)
+    if sys.version_info <= (3, 10):
+        # 3.10 changed the wording a bit
+        expected_help = expected_help.replace('options:', 'optional arguments:')
 
-    # older python versions show arguments like this:
     actual_help = subprocess.check_output(['op-env', 'json', '--help'], env=env).decode('utf-8')
+
     assert actual_help == expected_help
 
 
 def test_cli_help_sh():
+    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
+    env = {}
+    env.update(os.environ)
+    env.update(request_long_lines)
     expected_help = """usage: op-env sh [-h] [--environment ENVVAR] [--yaml-environment YAMLENV]
 
 Produce commands on stdout that can be 'eval'ed to set variables in current shell
@@ -573,10 +581,9 @@ options:
   --yaml-environment YAMLENV, -y YAMLENV
                         YAML config specifying a list of environment variable names to set
 """
-    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
-    env = {}
-    env.update(os.environ)
-    env.update(request_long_lines)
+    if sys.version_info <= (3, 10):
+        # 3.10 changed the wording a bit
+        expected_help = expected_help.replace('options:', 'optional arguments:')
 
     # older python versions show arguments like this:
     actual_help = subprocess.check_output(['op-env', 'sh', '--help'], env=env).decode('utf-8')
@@ -601,6 +608,10 @@ op-env: error: the following arguments are required: operation
 
 
 def test_cli_help():
+    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
+    env = {}
+    env.update(os.environ)
+    env.update(request_long_lines)
     expected_help = """usage: op-env [-h] {run,json,sh} ...
 
 positional arguments:
@@ -612,10 +623,9 @@ positional arguments:
 options:
   -h, --help     show this help message and exit
 """
-    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
-    env = {}
-    env.update(os.environ)
-    env.update(request_long_lines)
+    if sys.version_info <= (3, 10):
+        # 3.10 changed the wording a bit
+        expected_help = expected_help.replace('options:', 'optional arguments:')
 
     # older python versions show arguments like this:
     actual_help = subprocess.check_output(['op-env', '--help'],
