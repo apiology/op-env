@@ -516,6 +516,11 @@ def test_cli_run():
 
 
 def test_cli_help_run():
+    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
+    env = {}
+    env.update(os.environ)
+    env.update(request_long_lines)
+
     expected_help = """usage: op-env run [-h] [--environment ENVVAR] [--yaml-environment YAMLENV] command [command ...]
 
 Run the specified command with the given environment variables
@@ -530,10 +535,9 @@ options:
   --yaml-environment YAMLENV, -y YAMLENV
                         YAML config specifying a list of environment variable names to set
 """
-    request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
-    env = {}
-    env.update(os.environ)
-    env.update(request_long_lines)
+    if sys.version_info <= (3, 10):
+        # 3.10 changed the wording a bit
+        expected_help = expected_help.replace('options:', 'optional arguments:')
 
     # older python versions show arguments like this:
     actual_help = subprocess.check_output(['op-env', 'run', '--help'], env=env).decode('utf-8')
