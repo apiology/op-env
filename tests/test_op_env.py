@@ -522,7 +522,7 @@ Run the specified command with the given environment variables
 positional arguments:
   command               Command to run with the environment set from 1Password
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   --environment ENVVAR, -e ENVVAR
                         environment variable name to set, based on item with same tag in 1Password
@@ -544,7 +544,7 @@ def test_cli_help_json():
 
 Produce simple JSON on stdout mapping requested env variables to values
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   --environment ENVVAR, -e ENVVAR
                         environment variable name to set, based on item with same tag in 1Password
@@ -566,7 +566,7 @@ def test_cli_help_sh():
 
 Produce commands on stdout that can be 'eval'ed to set variables in current shell
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   --environment ENVVAR, -e ENVVAR
                         environment variable name to set, based on item with same tag in 1Password
@@ -609,7 +609,7 @@ positional arguments:
     json         Produce simple JSON on stdout mapping requested env variables to values
     sh           Produce commands on stdout that can be 'eval'ed to set variables in current shell
 
-optional arguments:
+options:
   -h, --help     show this help message and exit
 """
     request_long_lines = {'COLUMNS': '999', 'LINES': '25'}
