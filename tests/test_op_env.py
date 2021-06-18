@@ -69,7 +69,7 @@ Do some kind of operation
 positional arguments:
   arg1        arg1 help
 
-optional arguments:
+options:
   -h, --help  show this help message and exit
 """
     # older python versions show arguments like this:
@@ -106,7 +106,7 @@ positional arguments:
   {op1}
     op1       Do some kind of operation
 
-optional arguments:
+options:
   -h, --help  show this help message and exit
 """
     # older python versions show arguments like this:
