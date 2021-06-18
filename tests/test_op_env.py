@@ -104,58 +104,58 @@ def two_item_yaml_file():
 @patch('op_env.op._op_pluck_correct_field', autospec=op_env.op._op_pluck_correct_field)
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_process_args_shows_json_with_simple_env(stdout_stringio,
-                                                 mock_op_pluck_correct_field,
-                                                 mock_op_get_item,
-                                                 mock_op_consolidated_fields,
-                                                 mock_op_list_items) -> None:
-    mock_list_items_output = mock_op_list_items.return_value
-    mock_all_fields_to_seek = mock_op_consolidated_fields.return_value
+                                                 op_pluck_correct_field,
+                                                 op_get_item,
+                                                 op_consolidated_fields,
+                                                 op_list_items) -> None:
+    list_items_output = op_list_items.return_value
+    all_fields_to_seek = op_consolidated_fields.return_value
     Dict[EnvVarName, Dict[FieldName, FieldValue]]
     retval: Dict[EnvVarName, Dict[FieldName, FieldValue]] = {
         EnvVarName('a'): {
             FieldName('password'): FieldValue('1'),
         }}
-    mock_op_get_item.return_value = retval
+    op_get_item.return_value = retval
     env_var_names = [EnvVarName('a')]
     args: Arguments = {
         'operation': 'json',
         'environment': env_var_names,
         'command': []
     }
-    mock_op_pluck_correct_field.return_value = '1'
+    op_pluck_correct_field.return_value = '1'
     process_args(args)
     assert stdout_stringio.getvalue() == '{"a": "1"}\n'
-    mock_op_list_items.assert_called_with(env_var_names)
-    mock_op_consolidated_fields.assert_called_with(env_var_names)
-    mock_op_pluck_correct_field.assert_called_with('a', {'password': '1'})
-    mock_op_get_item.assert_called_with(mock_list_items_output,
-                                        env_var_names,
-                                        mock_all_fields_to_seek)
+    op_list_items.assert_called_with(env_var_names)
+    op_consolidated_fields.assert_called_with(env_var_names)
+    op_pluck_correct_field.assert_called_with('a', {'password': '1'})
+    op_get_item.assert_called_with(list_items_output,
+                                   env_var_names,
+                                   all_fields_to_seek)
 
 
 @patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True)
 @patch('op_env._cli.do_smart_lookups', autospec=op_env._cli.do_smart_lookups)
 @patch('op_env._cli.subprocess', autospec=op_env._cli.subprocess)
-def test_process_args_runs_simple_command_with_simple_env(mock_subprocess,
-                                                          mock_do_smart_lookups):
+def test_process_args_runs_simple_command_with_simple_env(subprocess,
+                                                          do_smart_lookups):
     command = ['env']
     args = {'operation': 'run', 'command': command,
             'environment': ['a']}
-    mock_do_smart_lookups.return_value = {'a': '1'}
+    do_smart_lookups.return_value = {'a': '1'}
     process_args(args)
-    mock_do_smart_lookups.assert_called_with(['a'])
-    mock_subprocess.check_call.assert_called_with(command,
-                                                  env={'a': '1',
-                                                       'ORIGINAL_ENV': 'TRUE'})
+    do_smart_lookups.assert_called_with(['a'])
+    subprocess.check_call.assert_called_with(command,
+                                             env={'a': '1',
+                                                  'ORIGINAL_ENV': 'TRUE'})
 
 
 @patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True)
 @patch('op_env._cli.do_smart_lookups', autospec=op_env._cli.do_smart_lookups)
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_process_args_shows_env_with_variables_needing_escape(stdout_stringio,
-                                                              mock_do_smart_lookups):
+                                                              do_smart_lookups):
     args = {'operation': 'sh', 'environment': ['a', 'c']}
-    mock_do_smart_lookups.return_value = {'a': "'", 'c': 'd'}
+    do_smart_lookups.return_value = {'a': "'", 'c': 'd'}
     process_args(args)
     assert stdout_stringio.getvalue() == 'a=\'\'"\'"\'\'; export a\nc=d; export c\n'
 
@@ -164,14 +164,14 @@ def test_process_args_shows_env_with_variables_needing_escape(stdout_stringio,
 @patch('op_env._cli.do_smart_lookups', autospec=op_env._cli.do_smart_lookups)
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_process_args_shows_env_with_multiple_variables(stdout_stringio,
-                                                        mock_do_smart_lookups):
+                                                        do_smart_lookups):
     def fake_op_smart_lookup(k):
         return {
             'a': 'b',
             'c': 'd',
          }[k]
 
-    mock_do_smart_lookups.return_value = {'a': 'b', 'c': 'd'}
+    do_smart_lookups.return_value = {'a': 'b', 'c': 'd'}
     args = {'operation': 'sh', 'environment': ['a', 'c']}
     process_args(args)
     assert stdout_stringio.getvalue() == 'a=b; export a\nc=d; export c\n'
@@ -181,8 +181,8 @@ def test_process_args_shows_env_with_multiple_variables(stdout_stringio,
 @patch('op_env._cli.do_smart_lookups', autospec=op_env._cli.do_smart_lookups)
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_process_args_shows_env_with_simple_env(stdout_stringio,
-                                                mock_do_smart_lookups):
-    mock_do_smart_lookups.return_value = {'a': 'b'}
+                                                do_smart_lookups):
+    do_smart_lookups.return_value = {'a': 'b'}
     args = {'operation': 'sh', 'environment': ['a']}
     process_args(args)
     assert stdout_stringio.getvalue() == 'a=b; export a\n'
@@ -191,55 +191,55 @@ def test_process_args_shows_env_with_simple_env(stdout_stringio,
 @pytest.mark.skip(reason="need to mock op binary in test PATH")
 @patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True)
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_process_args_runs_simple_command(mock_subprocess):
+def test_process_args_runs_simple_command(subprocess):
     command = ['env']
     args = {'operation': 'run', 'command': command,
             'environment': []}
     process_args(args)
-    mock_subprocess.check_call.assert_called_with(command, env={
+    subprocess.check_call.assert_called_with(command, env={
         'ORIGINAL_ENV': 'TRUE',
     })
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_process_args_rejects_non_run(mock_subprocess):
+def test_process_args_rejects_non_run(subprocess):
     with pytest.raises(ValueError):
         args = {'operation': 'definitely-not-run'}
         process_args(args)
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_fields_to_try_breaks_on_double_underscore_and_underscore(mock_subprocess):
+def test_fields_to_try_breaks_on_double_underscore_and_underscore(subprocess):
     out = _op_fields_to_try('ABC__FLOOGLE_BAR')
     assert out == ['abc__floogle_bar', 'floogle_bar', 'bar', 'password']
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_fields_to_try_breaks_on_double_underscore(mock_subprocess):
+def test_fields_to_try_breaks_on_double_underscore(subprocess):
     out = _op_fields_to_try('ABC__FLOOGLE')
     assert out == ['abc__floogle', 'floogle', 'password']
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_fields_to_try_conversion_username(mock_subprocess):
+def test_fields_to_try_conversion_username(subprocess):
     out = _op_fields_to_try('ABC_USER')
     assert out == ['abc_user', 'user', 'username', 'password']
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_fields_to_try_multiple_words(mock_subprocess):
+def test_fields_to_try_multiple_words(subprocess):
     out = _op_fields_to_try('ABC_FLOOGLE')
     assert out == ['abc_floogle', 'floogle', 'password']
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_fields_to_try_simple(mock_subprocess):
+def test_fields_to_try_simple(subprocess):
     out = _op_fields_to_try('ABC')
     assert out == ['abc', 'password']
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_op_do_smart_lookups_multiple_entries(mock_subprocess):
+def test_op_do_smart_lookups_multiple_entries(subprocess):
     list_output = \
         b'[{"overview":{"tags":["ANY_TEST_VALUE"]}},' \
         b'{"overview": {"tags": ["ANOTHER_TEST_VALUE"]}}]'
@@ -250,12 +250,12 @@ def test_op_do_smart_lookups_multiple_entries(mock_subprocess):
         b'{"any_test_value":"","another_test_value":"","password":"any","value":""}\n' \
         b'{"any_test_value":"","another_test_value":"another",'\
         b'"password":"get_results","value":""}'
-    mock_subprocess.check_output.side_effect = [
+    subprocess.check_output.side_effect = [
         list_output,
         get_output,
     ]
     out = do_smart_lookups(['ANY_TEST_VALUE', 'ANOTHER_TEST_VALUE'])
-    mock_subprocess.check_output.\
+    subprocess.check_output.\
         assert_has_calls([call(['op', 'list', 'items', '--tags',
                                 'ANY_TEST_VALUE,ANOTHER_TEST_VALUE']),
                           call(['op', 'get', 'item', '-', '--fields',
@@ -268,11 +268,11 @@ def test_op_do_smart_lookups_multiple_entries(mock_subprocess):
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_do_smart_lookups_no_field_value(mock_subprocess):
+def test_do_smart_lookups_no_field_value(subprocess):
     list_output = b'[{"overview":{"tags":["ANY_TEST_VALUE"]}}]'
     post_processed_list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
     get_output = b'{"password":""}\n'
-    mock_subprocess.check_output.side_effect = [
+    subprocess.check_output.side_effect = [
         list_output,
         get_output,
     ]
@@ -282,7 +282,7 @@ def test_do_smart_lookups_no_field_value(mock_subprocess):
                               'any_test_value, value, password.  '
                               'Please populate one of these fields in 1Password.')):
         do_smart_lookups(['ANY_TEST_VALUE'])
-    mock_subprocess.check_output.\
+    subprocess.check_output.\
         assert_has_calls([call(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE']),
                           call(['op', 'get', 'item', '-', '--fields',
                                 'any_test_value,password,value'],
@@ -290,52 +290,52 @@ def test_do_smart_lookups_no_field_value(mock_subprocess):
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_do_smart_lookups_too_few_entries(mock_subprocess):
+def test_do_smart_lookups_too_few_entries(subprocess):
     list_output = b"[]"
-    mock_subprocess.check_output.return_value = list_output
+    subprocess.check_output.return_value = list_output
     with pytest.raises(NoEntriesOPLookupError,
                        match='No 1Password entries with tag ANY_TEST_VALUE found'):
         do_smart_lookups(['ANY_TEST_VALUE'])
-    mock_subprocess.check_output.\
+    subprocess.check_output.\
         assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'])
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_do_smart_lookups_too_many_entries(mock_subprocess):
+def test_do_smart_lookups_too_many_entries(subprocess):
     list_output = \
         b'[{"overview":{"tags":["ANY_TEST_VALUE"]}},{"overview":{"tags":["ANY_TEST_VALUE"]}}]'
-    mock_subprocess.check_output.return_value = list_output
+    subprocess.check_output.return_value = list_output
     with pytest.raises(TooManyEntriesOPLookupError,
                        match='Too many 1Password entries with tag ANY_TEST_VALUE'):
         do_smart_lookups(['ANY_TEST_VALUE'])
-    mock_subprocess.check_output.\
+    subprocess.check_output.\
         assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'])
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_op_do_smart_lookups_comma_in_env(mock_subprocess):
+def test_op_do_smart_lookups_comma_in_env(subprocess):
     list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
     get_output = b'{"any_test_value":"","password":"get_results","value":""}\n'
-    mock_subprocess.check_output.side_effect = [
+    subprocess.check_output.side_effect = [
         list_output,
         get_output,
     ]
     with pytest.raises(InvalidTagOPLookupError,
                        match='1Password does not support tags with commas'):
         do_smart_lookups(['ENV_WITH_,_IN_IT'])
-    mock_subprocess.check_output.assert_not_called()
+    subprocess.check_output.assert_not_called()
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_op_do_smart_lookups_one_var(mock_subprocess):
+def test_op_do_smart_lookups_one_var(subprocess):
     list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
     get_output = b'{"any_test_value":"","password":"get_results","value":""}\n'
-    mock_subprocess.check_output.side_effect = [
+    subprocess.check_output.side_effect = [
         list_output,
         get_output,
     ]
     out = do_smart_lookups(['ANY_TEST_VALUE'])
-    mock_subprocess.check_output.\
+    subprocess.check_output.\
         assert_has_calls([call(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE']),
                           call(['op', 'get', 'item', '-', '--fields',
                                 'any_test_value,password,value'],
@@ -344,16 +344,16 @@ def test_op_do_smart_lookups_one_var(mock_subprocess):
 
 
 @patch('op_env.op._op_fields_to_try', autospec=_op_fields_to_try)
-def test_op_pluck_correct_field_multiple_fields(mock_op_fields_to_try):
-    mock_op_fields_to_try.return_value = ['floogle', 'blah']
+def test_op_pluck_correct_field_multiple_fields(op_fields_to_try):
+    op_fields_to_try.return_value = ['floogle', 'blah']
     ret = _op_pluck_correct_field('ENVVARNAME', {'blah': '', 'floogle': 'result value'})
-    mock_op_fields_to_try.assert_called_with('ENVVARNAME')
+    op_fields_to_try.assert_called_with('ENVVARNAME')
     assert ret == 'result value'
 
 
 @patch('op_env.op._op_fields_to_try', autospec=_op_fields_to_try)
-def test_op_pluck_correct_field_multiple_fields_all_errors(mock_op_fields_to_try):
-    mock_op_fields_to_try.return_value = ['floogle', 'blah']
+def test_op_pluck_correct_field_multiple_fields_all_errors(op_fields_to_try):
+    op_fields_to_try.return_value = ['floogle', 'blah']
     with pytest.raises(NoFieldValueOPLookupError,
                        match=('1Passsword entry with tag '
                               'ENVVARNAME has no value for '
@@ -361,31 +361,31 @@ def test_op_pluck_correct_field_multiple_fields_all_errors(mock_op_fields_to_try
                               "floogle, blah.  Please populate "
                               'one of these fields in 1Password.')):
         _op_pluck_correct_field('ENVVARNAME', {'floogle': '', 'blah': ''})
-    mock_op_fields_to_try.assert_called_with('ENVVARNAME')
+    op_fields_to_try.assert_called_with('ENVVARNAME')
 
 
 @patch('op_env.op._op_fields_to_try', autospec=_op_fields_to_try)
-def test_op_pluck_correct_field_single_field_with_error(mock_op_fields_to_try):
-    mock_op_fields_to_try.return_value = ['floogle']
+def test_op_pluck_correct_field_single_field_with_error(op_fields_to_try):
+    op_fields_to_try.return_value = ['floogle']
     with pytest.raises(NoFieldValueOPLookupError):
         _op_pluck_correct_field('ENVVARNAME', {'floogle': ''})
-    mock_op_fields_to_try.assert_called_with('ENVVARNAME')
+    op_fields_to_try.assert_called_with('ENVVARNAME')
 
 
 @patch('op_env.op._op_fields_to_try', autospec=_op_fields_to_try)
-def test_op_pluck_correct_field_multiple_fields_chooses_second(mock_op_fields_to_try):
+def test_op_pluck_correct_field_multiple_fields_chooses_second(op_fields_to_try):
 
-    mock_op_fields_to_try.return_value = ['floogle', 'blah']
+    op_fields_to_try.return_value = ['floogle', 'blah']
     ret = _op_pluck_correct_field('ENVVARNAME', {'floogle': '', 'blah': 'result value'})
-    mock_op_fields_to_try.assert_called_with('ENVVARNAME')
+    op_fields_to_try.assert_called_with('ENVVARNAME')
     assert ret == 'result value'
 
 
 @patch('op_env.op._op_fields_to_try', autospec=_op_fields_to_try)
-def test_op_pluck_correct_field_chooses_first(mock_op_fields_to_try):
-    mock_op_fields_to_try.return_value = ['floogle']
+def test_op_pluck_correct_field_chooses_first(op_fields_to_try):
+    op_fields_to_try.return_value = ['floogle']
     ret = _op_pluck_correct_field('ENVVARNAME', {'floogle': 'myvalue'})
-    mock_op_fields_to_try.assert_called_with('ENVVARNAME')
+    op_fields_to_try.assert_called_with('ENVVARNAME')
     assert ret == 'myvalue'
 
 
