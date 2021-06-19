@@ -56,6 +56,13 @@ def add_environment_arguments(arg_parser: argparse.ArgumentParser) -> None:
                             default=[],
                             help='YAML config specifying a list of environment variable '
                             'names to set')
+    arg_parser.add_argument('--file-environment', '-f',
+                            metavar='FILEENV',
+                            # action=AppendListFromTextAction, # TODO
+                            dest='environment',
+                            default=[],
+                            help='Text config specifying environment variable '
+                            'names to set, one on each line')
 
 
 def parse_argv(argv: List[str]) -> Arguments:
