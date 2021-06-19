@@ -31,6 +31,7 @@ class AppendListFromTextAction(argparse.Action):
         # remove empty lines
         variables = [variable for variable in variables if variable]
         envvars = getattr(namespace, self.dest)
+        assert isinstance(envvars, list)  # should be validated already by argparse
         envvars.extend(variables)
 
 
@@ -54,6 +55,7 @@ class AppendListFromYAMLAction(argparse.Action):
                 raise argparse.ArgumentTypeError('YAML file must contain a list of strings; '
                                                  f'found {variables_from_yaml}')
         envvars = getattr(namespace, self.dest)
+        assert isinstance(envvars, list)  # should be validated already by argparse
         envvars.extend(variables_from_yaml)
 
 
