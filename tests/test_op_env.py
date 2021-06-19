@@ -459,6 +459,29 @@ def test_parse_args_run_operation_with_yaml_arguments_and_environment_arguments(
                     'operation': 'run'}
 
 
+def test_parse_args_run_operation_with_yaml_arguments_and_text_environment_arguments(
+        two_item_yaml_file,
+        two_item_text_file
+):
+    argv = ['op-env', 'run',
+            '-e', 'VAR0',
+            '-y', two_item_yaml_file,
+            '-f', two_item_text_file,
+            'mycmd', '1', '2', '3']
+    args = parse_argv(argv)
+    assert args == {'command': ['mycmd', '1', '2', '3'],
+                    'environment': ['VAR0', 'VAR1', 'VAR2', 'TVAR1', 'TVAR2'],
+                    'operation': 'run'}
+
+
+def test_parse_args_run_operation_with_text_arguments_and_environment_arguments(two_item_text_file):
+    argv = ['op-env', 'run', '-e', 'VAR0', '-f', two_item_text_file, 'mycmd', '1', '2', '3']
+    args = parse_argv(argv)
+    assert args == {'command': ['mycmd', '1', '2', '3'],
+                    'environment': ['VAR0', 'TVAR1', 'TVAR2'],
+                    'operation': 'run'}
+
+
 def test_list_of_numbers_yaml_argument(list_of_number_yaml_file):
     argv = ['op-env', 'run', '-y', list_of_number_yaml_file, 'mycmd', '1', '2', '3']
     with pytest.raises(argparse.ArgumentTypeError,
@@ -495,6 +518,22 @@ def test_parse_args_run_operation_with_empty_file_yaml_argument(empty_file):
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': [],
+                    'operation': 'run'}
+
+
+def test_parse_args_run_operation_with_empty_file_text_argument(empty_file):
+    argv = ['op-env', 'run', '-f', empty_file, 'mycmd', '1', '2', '3']
+    args = parse_argv(argv)
+    assert args == {'command': ['mycmd', '1', '2', '3'],
+                    'environment': [],
+                    'operation': 'run'}
+
+
+def test_parse_args_run_operation_with_text_argument(two_item_text_file):
+    argv = ['op-env', 'run', '-f', two_item_text_file, 'mycmd', '1', '2', '3']
+    args = parse_argv(argv)
+    assert args == {'command': ['mycmd', '1', '2', '3'],
+                    'environment': ['TVAR1', 'TVAR2'],
                     'operation': 'run'}
 
 

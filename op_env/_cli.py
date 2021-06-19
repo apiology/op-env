@@ -19,6 +19,21 @@ class Arguments(TypedDict):
     command: List[str]
 
 
+class AppendListFromTextAction(argparse.Action):
+    def __call__(self,
+                 parser: argparse.ArgumentParser,
+                 namespace: argparse.Namespace,
+                 values: Union[str, Sequence[Any], None],
+                 option_string: Optional[str] = None):
+        assert isinstance(values, str)  # should be validated already by argparse
+        filename = values
+        variables = open(filename, 'r').read().split("\n")
+        # remove empty lines
+        variables = [variable for variable in variables if variable]
+        envvars = getattr(namespace, self.dest)
+        envvars.extend(variables)
+
+
 class AppendListFromYAMLAction(argparse.Action):
     def __call__(self,
                  parser: argparse.ArgumentParser,
@@ -58,7 +73,7 @@ def add_environment_arguments(arg_parser: argparse.ArgumentParser) -> None:
                             'names to set')
     arg_parser.add_argument('--file-environment', '-f',
                             metavar='FILEENV',
-                            # action=AppendListFromTextAction, # TODO
+                            action=AppendListFromTextAction,
                             dest='environment',
                             default=[],
                             help='Text config specifying environment variable '
