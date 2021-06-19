@@ -45,6 +45,14 @@ Let's say you have a web server you're running locally named ``web-server``.  Le
 
 4. Smile with the smug satisfaction of someone who doesn't have yet another password hanging around in a text file on disk.
 
+**Can I share my list of env variables with my docker-compose.yml file?**
+
+Heck yeah!  Just create a text file listing your environment variable
+names (one per line), point to it using
+[`env_file:`](https://docs.docker.com/compose/environment-variables/#the-env_file-configuration-option)
+in docker-compose.yml, and point to the same file with the
+`--file-environment` / `-f` flag in op_env.
+
 **Which field does op-env read?  Can I pull a username, password, servername and port from 1Password?**
 
 op-env uses the name of the env variable to infer which field in the entry should be used - e.g., 'server' for ``WEB_DB_SERVER``.  It tries to handle common synonyms (more welcome in PRs!) like 'user' for 'username'.  If all else fails it'll pull the 'password' field.

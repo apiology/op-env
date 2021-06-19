@@ -99,6 +99,17 @@ def two_item_yaml_file():
         yield yaml_file.name
 
 
+@pytest.fixture
+def two_item_text_file():
+    with tempfile.NamedTemporaryFile(mode="w+t") as text_file:
+        contents = ['TVAR1', 'TVAR2']
+        for item in contents:
+            text_file.write(item)
+            text_file.write("\n")
+        text_file.flush()
+        yield text_file.name
+
+
 @patch('op_env.op._op_list_items', autospec=op_env.op._op_list_items)
 @patch('op_env.op._op_consolidated_fields', autospec=op_env.op._op_consolidated_fields)
 @patch('op_env.op._op_get_item', autospec=op_env.op._op_get_item)
@@ -448,6 +459,29 @@ def test_parse_args_run_operation_with_yaml_arguments_and_environment_arguments(
                     'operation': 'run'}
 
 
+def test_parse_args_run_operation_with_yaml_arguments_and_text_environment_arguments(
+        two_item_yaml_file,
+        two_item_text_file
+):
+    argv = ['op-env', 'run',
+            '-e', 'VAR0',
+            '-y', two_item_yaml_file,
+            '-f', two_item_text_file,
+            'mycmd', '1', '2', '3']
+    args = parse_argv(argv)
+    assert args == {'command': ['mycmd', '1', '2', '3'],
+                    'environment': ['VAR0', 'VAR1', 'VAR2', 'TVAR1', 'TVAR2'],
+                    'operation': 'run'}
+
+
+def test_parse_args_run_operation_with_text_arguments_and_environment_arguments(two_item_text_file):
+    argv = ['op-env', 'run', '-e', 'VAR0', '-f', two_item_text_file, 'mycmd', '1', '2', '3']
+    args = parse_argv(argv)
+    assert args == {'command': ['mycmd', '1', '2', '3'],
+                    'environment': ['VAR0', 'TVAR1', 'TVAR2'],
+                    'operation': 'run'}
+
+
 def test_list_of_numbers_yaml_argument(list_of_number_yaml_file):
     argv = ['op-env', 'run', '-y', list_of_number_yaml_file, 'mycmd', '1', '2', '3']
     with pytest.raises(argparse.ArgumentTypeError,
@@ -487,6 +521,22 @@ def test_parse_args_run_operation_with_empty_file_yaml_argument(empty_file):
                     'operation': 'run'}
 
 
+def test_parse_args_run_operation_with_empty_file_text_argument(empty_file):
+    argv = ['op-env', 'run', '-f', empty_file, 'mycmd', '1', '2', '3']
+    args = parse_argv(argv)
+    assert args == {'command': ['mycmd', '1', '2', '3'],
+                    'environment': [],
+                    'operation': 'run'}
+
+
+def test_parse_args_run_operation_with_text_argument(two_item_text_file):
+    argv = ['op-env', 'run', '-f', two_item_text_file, 'mycmd', '1', '2', '3']
+    args = parse_argv(argv)
+    assert args == {'command': ['mycmd', '1', '2', '3'],
+                    'environment': ['TVAR1', 'TVAR2'],
+                    'operation': 'run'}
+
+
 def test_parse_args_run_operation_with_yaml_argument(two_item_yaml_file):
     argv = ['op-env', 'run', '-y', two_item_yaml_file, 'mycmd', '1', '2', '3']
     args = parse_argv(argv)
@@ -521,7 +571,8 @@ def test_cli_help_run():
     env.update(os.environ)
     env.update(request_long_lines)
 
-    expected_help = """usage: op-env run [-h] [--environment ENVVAR] [--yaml-environment YAMLENV] command [command ...]
+    expected_help = """usage: op-env run [-h] [--environment ENVVAR] [--yaml-environment YAMLENV] \
+[--file-environment FILEENV] command [command ...]
 
 Run the specified command with the given environment variables
 
@@ -534,6 +585,8 @@ options:
                         environment variable name to set, based on item with same tag in 1Password
   --yaml-environment YAMLENV, -y YAMLENV
                         YAML config specifying a list of environment variable names to set
+  --file-environment FILEENV, -f FILEENV
+                        Text config specifying environment variable names to set, one on each line
 """
     if sys.version_info <= (3, 10):
         # 3.10 changed the wording a bit
@@ -549,7 +602,8 @@ def test_cli_help_json():
     env = {}
     env.update(os.environ)
     env.update(request_long_lines)
-    expected_help = """usage: op-env json [-h] [--environment ENVVAR] [--yaml-environment YAMLENV]
+    expected_help = """usage: op-env json [-h] [--environment ENVVAR] [--yaml-environment YAMLENV] \
+[--file-environment FILEENV]
 
 Produce simple JSON on stdout mapping requested env variables to values
 
@@ -559,6 +613,8 @@ options:
                         environment variable name to set, based on item with same tag in 1Password
   --yaml-environment YAMLENV, -y YAMLENV
                         YAML config specifying a list of environment variable names to set
+  --file-environment FILEENV, -f FILEENV
+                        Text config specifying environment variable names to set, one on each line
 """
     if sys.version_info <= (3, 10):
         # 3.10 changed the wording a bit
@@ -574,7 +630,8 @@ def test_cli_help_sh():
     env = {}
     env.update(os.environ)
     env.update(request_long_lines)
-    expected_help = """usage: op-env sh [-h] [--environment ENVVAR] [--yaml-environment YAMLENV]
+    expected_help = """usage: op-env sh [-h] [--environment ENVVAR] [--yaml-environment YAMLENV] \
+[--file-environment FILEENV]
 
 Produce commands on stdout that can be 'eval'ed to set variables in current shell
 
@@ -584,6 +641,8 @@ options:
                         environment variable name to set, based on item with same tag in 1Password
   --yaml-environment YAMLENV, -y YAMLENV
                         YAML config specifying a list of environment variable names to set
+  --file-environment FILEENV, -f FILEENV
+                        Text config specifying environment variable names to set, one on each line
 """
     if sys.version_info <= (3, 10):
         # 3.10 changed the wording a bit

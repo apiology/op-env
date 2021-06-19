@@ -19,6 +19,22 @@ class Arguments(TypedDict):
     command: List[str]
 
 
+class AppendListFromTextAction(argparse.Action):
+    def __call__(self,
+                 parser: argparse.ArgumentParser,
+                 namespace: argparse.Namespace,
+                 values: Union[str, Sequence[Any], None],
+                 option_string: Optional[str] = None):
+        assert isinstance(values, str)  # should be validated already by argparse
+        filename = values
+        variables = open(filename, 'r').read().split("\n")
+        # remove empty lines
+        variables = [variable for variable in variables if variable]
+        envvars = getattr(namespace, self.dest)
+        assert isinstance(envvars, list)  # should be validated already by argparse
+        envvars.extend(variables)
+
+
 class AppendListFromYAMLAction(argparse.Action):
     def __call__(self,
                  parser: argparse.ArgumentParser,
@@ -39,6 +55,7 @@ class AppendListFromYAMLAction(argparse.Action):
                 raise argparse.ArgumentTypeError('YAML file must contain a list of strings; '
                                                  f'found {variables_from_yaml}')
         envvars = getattr(namespace, self.dest)
+        assert isinstance(envvars, list)  # should be validated already by argparse
         envvars.extend(variables_from_yaml)
 
 
@@ -56,6 +73,13 @@ def add_environment_arguments(arg_parser: argparse.ArgumentParser) -> None:
                             default=[],
                             help='YAML config specifying a list of environment variable '
                             'names to set')
+    arg_parser.add_argument('--file-environment', '-f',
+                            metavar='FILEENV',
+                            action=AppendListFromTextAction,
+                            dest='environment',
+                            default=[],
+                            help='Text config specifying environment variable '
+                            'names to set, one on each line')
 
 
 def parse_argv(argv: List[str]) -> Arguments:
