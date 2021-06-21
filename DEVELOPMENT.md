@@ -1,5 +1,28 @@
 # Development
 
+## Making a release
+
+Related backlog tasks:
+
+* Do release of cookiecutter-pypackage projects in CircleCI (after other tests pass)
+
+First, make sure version has been bumped:
+
+```sh
+git checkout main
+git pull
+git stash
+open https://github.com/apiology/op_env/tags
+# set last_released_version, including the v
+git log ${last_released_version:?}..
+bumpversion # give it major, minor or patch
+git push
+git push --tags
+make release
+git stash pop
+open https://pypi.org/project/op_env
+```
+
 ## fix.sh
 
 If you want to use rbenv/pyenv/etc to manage versions of tools,
