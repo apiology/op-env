@@ -12,8 +12,7 @@ First, make sure version has been bumped:
 git checkout main
 git pull
 git stash
-open https://github.com/apiology/op_env/tags
-# set last_released_version, including the v
+last_released_version=v"$(python -c 'import op_env; print(op_env.__version__)')"
 git log ${last_released_version:?}..
 bumpversion # give it major, minor or patch
 git push
