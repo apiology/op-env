@@ -60,6 +60,12 @@ class AppendListFromYAMLAction(argparse.Action):
 
 
 def add_environment_arguments(arg_parser: argparse.ArgumentParser) -> None:
+    arg_parser.add_argument('--name', '-n',
+                            metavar='NAME',
+                            action='append',
+                            default=[],
+                            help='name of 1Password item from which all tagged environment '
+                            'variable names will be set')
     arg_parser.add_argument('--environment', '-e',
                             metavar='ENVVAR',
                             action='append',
