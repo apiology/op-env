@@ -405,33 +405,33 @@ def test_parse_args_json_operation_no_env_variables():
     argv = ['op-env', 'json']
     args = parse_argv(argv)
     assert args == {'environment': [],
-                    'name': [],
+                    'title': [],
                     'operation': 'json'}
 
 
 def test_parse_args_run_operation_with_long_name_specified():
-    argv = ['op-env', 'run', '--name', 'foo:bar', 'mycmd']
+    argv = ['op-env', 'run', '--title', 'foo:bar', 'mycmd']
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
                     'environment': [],
-                    'name': ['foo:bar'],
+                    'title': ['foo:bar'],
                     'operation': 'run'}
 
 
 def test_parse_args_run_operation_with_multiple_name_specified():
-    argv = ['op-env', 'run', '-n', 'foo: bar', '-n' 'bing: baz', 'mycmd']
+    argv = ['op-env', 'run', '-t', 'foo: bar', '-t' 'bing: baz', 'mycmd']
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
-                    'name': ['foo: bar', 'bing: baz'],
+                    'title': ['foo: bar', 'bing: baz'],
                     'environment': [],
                     'operation': 'run'}
 
 
 def test_parse_args_run_operation_with_name_specified():
-    argv = ['op-env', 'run', '-n', 'foo: bar', 'mycmd']
+    argv = ['op-env', 'run', '-t', 'foo: bar', 'mycmd']
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
-                    'name': ['foo: bar'],
+                    'title': ['foo: bar'],
                     'environment': [],
                     'operation': 'run'}
 
@@ -441,7 +441,7 @@ def test_parse_args_run_operation_with_long_env_variables():
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
                     'environment': ['DUMMY', 'DUMMY2'],
-                    'name': [],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -450,7 +450,7 @@ def test_parse_args_run_operation_no_env_variables():
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
                     'environment': [],
-                    'name': [],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -459,7 +459,7 @@ def test_parse_args_run_operation_with_multiple_environment_arguments():
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
                     'environment': ['DUMMY', 'DUMMY2'],
-                    'name': [],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -468,7 +468,7 @@ def test_parse_args_run_operation_with_environment_arguments():
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['DUMMY'],
-                    'name': [],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -480,7 +480,7 @@ def test_parse_args_run_operation_with_multiple_yaml_and_environment_arguments(o
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['VAR_1', 'VAR0', 'VAR1', 'VAR2', 'VARA'],
-                    'name': [],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -489,7 +489,7 @@ def test_parse_args_run_operation_with_yaml_arguments_and_environment_arguments(
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['VAR0', 'VAR1', 'VAR2'],
-                    'name': [],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -505,7 +505,7 @@ def test_parse_args_run_operation_with_yaml_arguments_and_text_environment_argum
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['VAR0', 'VAR1', 'VAR2', 'TVAR1', 'TVAR2'],
-                    'name': [],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -514,7 +514,7 @@ def test_parse_args_run_operation_with_text_arguments_and_environment_arguments(
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['VAR0', 'TVAR1', 'TVAR2'],
-                    'name': [],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -554,7 +554,7 @@ def test_parse_args_run_operation_with_empty_file_yaml_argument(empty_file):
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': [],
-                    'name': [],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -563,7 +563,7 @@ def test_parse_args_run_operation_with_empty_file_text_argument(empty_file):
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': [],
-                    'name': [],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -572,7 +572,7 @@ def test_parse_args_run_operation_with_text_argument(two_item_text_file):
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['TVAR1', 'TVAR2'],
-                    'name': [],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -581,20 +581,20 @@ def test_parse_args_run_operation_with_yaml_argument(two_item_yaml_file):
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['VAR1', 'VAR2'],
-                    'name': [],
+                    'title': [],
                     'operation': 'run'}
 
 
 def test_parse_args_run_simple():
     argv = ['op-env', 'run', '-e', 'DUMMY', 'mycmd']
     args = parse_argv(argv)
-    assert args == {'command': ['mycmd'], 'environment': ['DUMMY'], 'operation': 'run', 'name': []}
+    assert args == {'command': ['mycmd'], 'environment': ['DUMMY'], 'operation': 'run', 'title': []}
 
 
 def test_parse_args_sh_simple():
     argv = ['op-env', 'sh', '-e', 'DUMMY']
     args = parse_argv(argv)
-    assert args == {'environment': ['DUMMY'], 'operation': 'sh', 'name': []}
+    assert args == {'environment': ['DUMMY'], 'operation': 'sh', 'title': []}
 
 
 @pytest.mark.skip(reason="need to mock op binary in test PATH")
@@ -611,7 +611,7 @@ def test_cli_help_run():
     env.update(os.environ)
     env.update(request_long_lines)
 
-    expected_help = """usage: op-env run [-h] [--name NAME] [--environment ENVVAR] [--yaml-environment YAMLENV] \
+    expected_help = """usage: op-env run [-h] [--title TITLE] [--environment ENVVAR] [--yaml-environment YAMLENV] \
 [--file-environment FILEENV] command [command ...]
 
 Run the specified command with the given environment variables
@@ -621,7 +621,8 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  --name NAME, -n NAME  name of 1Password item from which all tagged environment variable names \
+  --title TITLE, -t TITLE
+                        title of 1Password item from which all tagged environment variable names \
 will be set
   --environment ENVVAR, -e ENVVAR
                         environment variable name to set, based on item with same tag in 1Password
@@ -644,14 +645,15 @@ def test_cli_help_json():
     env = {}
     env.update(os.environ)
     env.update(request_long_lines)
-    expected_help = """usage: op-env json [-h] [--name NAME] [--environment ENVVAR] [--yaml-environment YAMLENV] \
+    expected_help = """usage: op-env json [-h] [--title TITLE] [--environment ENVVAR] [--yaml-environment YAMLENV] \
 [--file-environment FILEENV]
 
 Produce simple JSON on stdout mapping requested env variables to values
 
 options:
   -h, --help            show this help message and exit
-  --name NAME, -n NAME  name of 1Password item from which all tagged environment variable names \
+  --title TITLE, -t TITLE
+                        title of 1Password item from which all tagged environment variable names \
 will be set
   --environment ENVVAR, -e ENVVAR
                         environment variable name to set, based on item with same tag in 1Password
@@ -674,14 +676,15 @@ def test_cli_help_sh():
     env = {}
     env.update(os.environ)
     env.update(request_long_lines)
-    expected_help = """usage: op-env sh [-h] [--name NAME] [--environment ENVVAR] [--yaml-environment YAMLENV] \
+    expected_help = """usage: op-env sh [-h] [--title TITLE] [--environment ENVVAR] [--yaml-environment YAMLENV] \
 [--file-environment FILEENV]
 
 Produce commands on stdout that can be 'eval'ed to set variables in current shell
 
 options:
   -h, --help            show this help message and exit
-  --name NAME, -n NAME  name of 1Password item from which all tagged environment variable names \
+  --title TITLE, -t TITLE
+                        title of 1Password item from which all tagged environment variable names \
 will be set
   --environment ENVVAR, -e ENVVAR
                         environment variable name to set, based on item with same tag in 1Password
