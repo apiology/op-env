@@ -20,7 +20,7 @@ from op_env._cli import Arguments, main, parse_argv, process_args
 from op_env.op import (
     _op_fields_to_try,
     _op_pluck_correct_field,
-    do_smart_lookups,
+    do_env_lookups,
     EnvVarName,
     FieldName,
     FieldValue,
@@ -146,55 +146,55 @@ def test_process_args_shows_json_with_simple_env(stdout_stringio,
 
 
 @patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True)
-@patch('op_env._cli.do_smart_lookups', autospec=op_env._cli.do_smart_lookups)
+@patch('op_env._cli.do_env_lookups', autospec=op_env._cli.do_env_lookups)
 @patch('op_env._cli.subprocess', autospec=op_env._cli.subprocess)
 def test_process_args_runs_simple_command_with_simple_env(subprocess,
-                                                          do_smart_lookups):
+                                                          do_env_lookups):
     command = ['env']
     args = {'operation': 'run', 'command': command,
             'environment': ['a']}
-    do_smart_lookups.return_value = {'a': '1'}
+    do_env_lookups.return_value = {'a': '1'}
     process_args(args)
-    do_smart_lookups.assert_called_with(['a'])
+    do_env_lookups.assert_called_with(['a'])
     subprocess.check_call.assert_called_with(command,
                                              env={'a': '1',
                                                   'ORIGINAL_ENV': 'TRUE'})
 
 
 @patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True)
-@patch('op_env._cli.do_smart_lookups', autospec=op_env._cli.do_smart_lookups)
+@patch('op_env._cli.do_env_lookups', autospec=op_env._cli.do_env_lookups)
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_process_args_shows_env_with_variables_needing_escape(stdout_stringio,
-                                                              do_smart_lookups):
+                                                              do_env_lookups):
     args = {'operation': 'sh', 'environment': ['a', 'c']}
-    do_smart_lookups.return_value = {'a': "'", 'c': 'd'}
+    do_env_lookups.return_value = {'a': "'", 'c': 'd'}
     process_args(args)
     assert stdout_stringio.getvalue() == 'a=\'\'"\'"\'\'; export a\nc=d; export c\n'
 
 
 @patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True)
-@patch('op_env._cli.do_smart_lookups', autospec=op_env._cli.do_smart_lookups)
+@patch('op_env._cli.do_env_lookups', autospec=op_env._cli.do_env_lookups)
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_process_args_shows_env_with_multiple_variables(stdout_stringio,
-                                                        do_smart_lookups):
+                                                        do_env_lookups):
     def fake_op_smart_lookup(k):
         return {
             'a': 'b',
             'c': 'd',
          }[k]
 
-    do_smart_lookups.return_value = {'a': 'b', 'c': 'd'}
+    do_env_lookups.return_value = {'a': 'b', 'c': 'd'}
     args = {'operation': 'sh', 'environment': ['a', 'c']}
     process_args(args)
     assert stdout_stringio.getvalue() == 'a=b; export a\nc=d; export c\n'
 
 
 @patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True)
-@patch('op_env._cli.do_smart_lookups', autospec=op_env._cli.do_smart_lookups)
+@patch('op_env._cli.do_env_lookups', autospec=op_env._cli.do_env_lookups)
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_process_args_shows_env_with_simple_env(stdout_stringio,
-                                                do_smart_lookups):
-    do_smart_lookups.return_value = {'a': 'b'}
+                                                do_env_lookups):
+    do_env_lookups.return_value = {'a': 'b'}
     args = {'operation': 'sh', 'environment': ['a']}
     process_args(args)
     assert stdout_stringio.getvalue() == 'a=b; export a\n'
@@ -251,7 +251,7 @@ def test_fields_to_try_simple(subprocess):
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_op_do_smart_lookups_multiple_entries(subprocess):
+def test_op_do_env_lookups_multiple_entries(subprocess):
     list_output = \
         b'[{"overview":{"tags":["ANY_TEST_VALUE"]}},' \
         b'{"overview": {"tags": ["ANOTHER_TEST_VALUE"]}}]'
@@ -266,7 +266,7 @@ def test_op_do_smart_lookups_multiple_entries(subprocess):
         list_output,
         get_output,
     ]
-    out = do_smart_lookups(['ANY_TEST_VALUE', 'ANOTHER_TEST_VALUE'])
+    out = do_env_lookups(['ANY_TEST_VALUE', 'ANOTHER_TEST_VALUE'])
     subprocess.check_output.\
         assert_has_calls([call(['op', 'list', 'items', '--tags',
                                 'ANY_TEST_VALUE,ANOTHER_TEST_VALUE']),
@@ -280,7 +280,7 @@ def test_op_do_smart_lookups_multiple_entries(subprocess):
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_do_smart_lookups_no_field_value(subprocess):
+def test_do_env_lookups_no_field_value(subprocess):
     list_output = b'[{"overview":{"tags":["ANY_TEST_VALUE"]}}]'
     post_processed_list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
     get_output = b'{"password":""}\n'
@@ -293,7 +293,7 @@ def test_do_smart_lookups_no_field_value(subprocess):
                               'has no value for the fields tried: '
                               'any_test_value, value, password.  '
                               'Please populate one of these fields in 1Password.')):
-        do_smart_lookups(['ANY_TEST_VALUE'])
+        do_env_lookups(['ANY_TEST_VALUE'])
     subprocess.check_output.\
         assert_has_calls([call(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE']),
                           call(['op', 'get', 'item', '-', '--fields',
@@ -302,30 +302,30 @@ def test_do_smart_lookups_no_field_value(subprocess):
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_do_smart_lookups_too_few_entries(subprocess):
+def test_do_env_lookups_too_few_entries(subprocess):
     list_output = b"[]"
     subprocess.check_output.return_value = list_output
     with pytest.raises(NoEntriesOPLookupError,
                        match='No 1Password entries with tag ANY_TEST_VALUE found'):
-        do_smart_lookups(['ANY_TEST_VALUE'])
+        do_env_lookups(['ANY_TEST_VALUE'])
     subprocess.check_output.\
         assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'])
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_do_smart_lookups_too_many_entries(subprocess):
+def test_do_env_lookups_too_many_entries(subprocess):
     list_output = \
         b'[{"overview":{"tags":["ANY_TEST_VALUE"]}},{"overview":{"tags":["ANY_TEST_VALUE"]}}]'
     subprocess.check_output.return_value = list_output
     with pytest.raises(TooManyEntriesOPLookupError,
                        match='Too many 1Password entries with tag ANY_TEST_VALUE'):
-        do_smart_lookups(['ANY_TEST_VALUE'])
+        do_env_lookups(['ANY_TEST_VALUE'])
     subprocess.check_output.\
         assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'])
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_op_do_smart_lookups_comma_in_env(subprocess):
+def test_op_do_env_lookups_comma_in_env(subprocess):
     list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
     get_output = b'{"any_test_value":"","password":"get_results","value":""}\n'
     subprocess.check_output.side_effect = [
@@ -334,19 +334,19 @@ def test_op_do_smart_lookups_comma_in_env(subprocess):
     ]
     with pytest.raises(InvalidTagOPLookupError,
                        match='1Password does not support tags with commas'):
-        do_smart_lookups(['ENV_WITH_,_IN_IT'])
+        do_env_lookups(['ENV_WITH_,_IN_IT'])
     subprocess.check_output.assert_not_called()
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_op_do_smart_lookups_one_var(subprocess):
+def test_op_do_env_lookups_one_var(subprocess):
     list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
     get_output = b'{"any_test_value":"","password":"get_results","value":""}\n'
     subprocess.check_output.side_effect = [
         list_output,
         get_output,
     ]
-    out = do_smart_lookups(['ANY_TEST_VALUE'])
+    out = do_env_lookups(['ANY_TEST_VALUE'])
     subprocess.check_output.\
         assert_has_calls([call(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE']),
                           call(['op', 'get', 'item', '-', '--fields',

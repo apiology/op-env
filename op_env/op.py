@@ -157,7 +157,7 @@ def validate_env_var_names(env_var_names: List[EnvVarName]) -> None:
             raise InvalidTagOPLookupError('1Password does not support tags with commas')
 
 
-def do_smart_lookups(env_var_names: List[EnvVarName]) -> Dict[str, str]:
+def do_env_lookups(env_var_names: List[EnvVarName]) -> Dict[str, str]:
     validate_env_var_names(env_var_names)
     list_items_output = _op_list_items(env_var_names)
     all_fields_to_seek = _op_consolidated_fields(env_var_names)
