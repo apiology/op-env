@@ -1,11 +1,12 @@
 from collections import OrderedDict
 import json
 import subprocess
-from typing import Any, Collection, Dict, List, NewType, Sequence, Set, TypeVar
+from typing import Any, Collection, Dict, List, Mapping, NewType, Sequence, Set, TypeVar
 
 from typing_extensions import TypedDict
 
 EnvVarName = NewType('EnvVarName', str)
+Title = NewType('Title', str)
 
 
 class OpListItemsEntryOverview(TypedDict, total=False):
@@ -151,14 +152,14 @@ def _op_pluck_correct_field(env_var_name: EnvVarName,
                                     'one of these fields in 1Password.')
 
 
-def validate_env_var_names(env_var_names: List[EnvVarName]) -> None:
+def _validate_env_var_names(env_var_names: List[EnvVarName]) -> None:
     for env_var_name in env_var_names:
         if ',' in env_var_name:
             raise InvalidTagOPLookupError('1Password does not support tags with commas')
 
 
-def do_env_lookups(env_var_names: List[EnvVarName]) -> Dict[str, str]:
-    validate_env_var_names(env_var_names)
+def _do_env_lookups(env_var_names: List[EnvVarName]) -> Dict[EnvVarName, FieldValue]:
+    _validate_env_var_names(env_var_names)
     list_items_output = _op_list_items(env_var_names)
     all_fields_to_seek = _op_consolidated_fields(env_var_names)
     field_values_for_envvars = _op_get_item(list_items_output,
@@ -168,3 +169,20 @@ def do_env_lookups(env_var_names: List[EnvVarName]) -> Dict[str, str]:
         env_var_name: _op_pluck_correct_field(env_var_name, field_values_for_envvars[env_var_name])
         for env_var_name in field_values_for_envvars
     }
+
+
+def _env_var_names_from_item(title: Title) -> List[EnvVarName]:
+    raise NotImplementedError('Teach me how to look up tags')
+
+
+def _do_title_lookups(titles: List[Title]) -> Mapping[EnvVarName, FieldValue]:
+    if len(titles) != 0:
+        raise NotImplementedError('Teach me to handle titles')
+    return {}
+
+
+def do_lookups(env_var_names: List[EnvVarName],
+               titles: List[Title]) -> Dict[EnvVarName, FieldValue]:
+    env_lookups = _do_env_lookups(env_var_names)
+    title_lookups = _do_title_lookups(titles)
+    return {**env_lookups, **title_lookups}

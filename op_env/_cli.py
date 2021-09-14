@@ -5,17 +5,18 @@ import os
 import pipes
 import subprocess
 import sys
-from typing import Any, List, Optional, Sequence, Union
+from typing import Any, cast, Dict, List, Optional, Sequence, Union
 
 from typing_extensions import TypedDict
 import yaml
 
-from .op import do_env_lookups, EnvVarName
+from .op import do_lookups, EnvVarName, Title
 
 
 class Arguments(TypedDict):
     operation: str
     environment: List[EnvVarName]
+    title: List[Title]
     command: List[str]
 
 
@@ -118,16 +119,16 @@ def parse_argv(argv: List[str]) -> Arguments:
 def process_args(args: Arguments) -> int:
     if args['operation'] == 'run':
         copied_env = dict(os.environ)
-        new_env = do_env_lookups(args['environment'])
-        copied_env.update(new_env)
+        new_env = do_lookups(args['environment'], args['title'])
+        copied_env.update(cast(Dict[str, str], new_env))
         subprocess.check_call(args['command'], env=copied_env)
         return 0
     elif args['operation'] == 'json':
-        new_env = do_env_lookups(args['environment'])
+        new_env = do_lookups(args['environment'], args['title'])
         print(json.dumps(new_env))
         return 0
     elif args['operation'] == 'sh':
-        new_env = do_env_lookups(args['environment'])
+        new_env = do_lookups(args['environment'], args['title'])
         for envvar, envvalue in new_env.items():
             print(f'{envvar}={pipes.quote(envvalue)}; export {envvar}')
         return 0
