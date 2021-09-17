@@ -67,10 +67,10 @@ def _op_list_items(env_var_names: List[EnvVarName]) -> OpListItemsOpaqueOutput:
     return OpListItemsOpaqueOutput(ordered_list_items_data)
 
 
-def _op_get_item_from_list_output(list_items_output: OpListItemsOpaqueOutput,
-                                  env_var_names: Collection[EnvVarName],
-                                  all_fields_to_seek: Collection[FieldName]) ->\
-                                  Dict[EnvVarName, Dict[FieldName, FieldValue]]:
+def _get_fields_from_list_output(list_items_output: OpListItemsOpaqueOutput,
+                                 env_var_names: Collection[EnvVarName],
+                                 all_fields_to_seek: Collection[FieldName]) ->\
+                                 Dict[EnvVarName, Dict[FieldName, FieldValue]]:
     sorted_fields_to_seek = sorted(all_fields_to_seek)
     get_command: List[str] = ['op', 'get', 'item', '-', '--fields',
                               ','.join(sorted_fields_to_seek)]
@@ -162,9 +162,9 @@ def _do_env_lookups(env_var_names: List[EnvVarName]) -> Dict[EnvVarName, FieldVa
     _validate_env_var_names(env_var_names)
     list_items_output = _op_list_items(env_var_names)
     all_fields_to_seek = _op_consolidated_fields(env_var_names)
-    field_values_for_envvars = _op_get_item_from_list_output(list_items_output,
-                                                             env_var_names,
-                                                             all_fields_to_seek)
+    field_values_for_envvars = _get_fields_from_list_output(list_items_output,
+                                                            env_var_names,
+                                                            all_fields_to_seek)
     return {
         env_var_name: _op_pluck_correct_field(env_var_name, field_values_for_envvars[env_var_name])
         for env_var_name in field_values_for_envvars
