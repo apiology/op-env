@@ -112,7 +112,7 @@ def two_item_text_file():
 
 @patch('op_env.op._op_list_items', autospec=op_env.op._op_list_items)
 @patch('op_env.op._op_consolidated_fields', autospec=op_env.op._op_consolidated_fields)
-@patch('op_env.op._op_get_item', autospec=op_env.op._op_get_item)
+@patch('op_env.op._op_get_item_from_list_output', autospec=op_env.op._op_get_item_from_list_output)
 @patch('op_env.op._op_pluck_correct_field', autospec=op_env.op._op_pluck_correct_field)
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_process_args_shows_json_with_simple_env(stdout_stringio,
