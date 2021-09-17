@@ -17,6 +17,8 @@ class OpListItemsEntry(TypedDict, total=False):
     overview: OpListItemsEntryOverview
 
 
+# 'op list items' output comes as a JSON list of items that matched
+# the query.
 OpListItemsOpaqueOutput = NewType('OpListItemsOpaqueOutput', List[Any])
 
 FieldName = NewType('FieldName', str)
@@ -71,6 +73,12 @@ def _get_fields_from_list_output(list_items_output: OpListItemsOpaqueOutput,
                                  env_var_names: Collection[EnvVarName],
                                  all_fields_to_seek: Collection[FieldName]) ->\
                                  Dict[EnvVarName, Dict[FieldName, FieldValue]]:
+    #
+    # 'op get item' with the '--fields' flag will take the JSON list
+    # of items structure from 'op list items' and return JSON objects
+    # separated by newlines of the fields requested if they exist in
+    # the item
+    #
     sorted_fields_to_seek = sorted(all_fields_to_seek)
     get_command: List[str] = ['op', 'get', 'item', '-', '--fields',
                               ','.join(sorted_fields_to_seek)]
