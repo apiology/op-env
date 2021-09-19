@@ -112,70 +112,70 @@ def two_item_text_file():
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-@patch('op_env.op._get_fields_from_title', autospec=op_env.op._get_fields_from_title)
-def test_do_title_lookups_both_titles_not_found(_get_fields_from_title,
+@patch('op_env.op._fields_from_title', autospec=op_env.op._fields_from_title)
+def test_do_title_lookups_both_titles_not_found(_fields_from_title,
                                                 subprocess):
-    _get_fields_from_title.return_value = {}
+    _fields_from_title.return_value = {}
     out = _do_title_lookups(['abc', 'def'])
     assert out == {}
-    _get_fields_from_title.assert_has_calls([call('abc'),
-                                             call('def')])
+    _fields_from_title.assert_has_calls([call('abc'),
+                                         call('def')])
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-@patch('op_env.op._get_fields_from_title', autospec=op_env.op._get_fields_from_title)
-def test_do_title_lookups_one_title_not_found(_get_fields_from_title,
+@patch('op_env.op._fields_from_title', autospec=op_env.op._fields_from_title)
+def test_do_title_lookups_one_title_not_found(_fields_from_title,
                                               subprocess):
-    _get_fields_from_title.side_effect = [{'A1': 'a1val'}, {}]
+    _fields_from_title.side_effect = [{'A1': 'a1val'}, {}]
     out = _do_title_lookups(['abc', 'def'])
     assert out == {'A1': 'a1val'}
-    _get_fields_from_title.assert_has_calls([call('abc'),
-                                             call('def')])
+    _fields_from_title.assert_has_calls([call('abc'),
+                                         call('def')])
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-@patch('op_env.op._get_fields_from_title', autospec=op_env.op._get_fields_from_title)
-def test_do_title_lookups_one_title_one_env_var(_get_fields_from_title,
+@patch('op_env.op._fields_from_title', autospec=op_env.op._fields_from_title)
+def test_do_title_lookups_one_title_one_env_var(_fields_from_title,
                                                 subprocess):
-    _get_fields_from_title.return_value = {'A1': 'a1val'}
+    _fields_from_title.return_value = {'A1': 'a1val'}
     out = _do_title_lookups(['abc'])
     assert out == {'A1': 'a1val'}
-    _get_fields_from_title.assert_called_once_with('abc')
+    _fields_from_title.assert_called_once_with('abc')
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-@patch('op_env.op._get_fields_from_title', autospec=op_env.op._get_fields_from_title)
-def test_do_title_lookups_two_titles_no_env_vars(_get_fields_from_title,
+@patch('op_env.op._fields_from_title', autospec=op_env.op._fields_from_title)
+def test_do_title_lookups_two_titles_no_env_vars(_fields_from_title,
                                                  subprocess):
-    _get_fields_from_title.return_value = {}
+    _fields_from_title.return_value = {}
     out = _do_title_lookups(['abc', 'def'])
     assert out == {}
-    _get_fields_from_title.assert_has_calls([call('abc'),
-                                             call('def')])
+    _fields_from_title.assert_has_calls([call('abc'),
+                                         call('def')])
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-@patch('op_env.op._get_fields_from_title', autospec=op_env.op._get_fields_from_title)
-def test_do_title_lookups_one_title_returns_no_env_vars(_get_fields_from_title,
+@patch('op_env.op._fields_from_title', autospec=op_env.op._fields_from_title)
+def test_do_title_lookups_one_title_returns_no_env_vars(_fields_from_title,
                                                         subprocess):
-    _get_fields_from_title.return_value = {}
+    _fields_from_title.return_value = {}
     out = _do_title_lookups(['abc'])
     assert out == {}
-    _get_fields_from_title.assert_called_once_with('abc')
+    _fields_from_title.assert_called_once_with('abc')
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-@patch('op_env.op._get_fields_from_title', autospec=op_env.op._get_fields_from_title)
-def test_do_title_lookups_no_titles(_get_fields_from_title,
+@patch('op_env.op._fields_from_title', autospec=op_env.op._fields_from_title)
+def test_do_title_lookups_no_titles(_fields_from_title,
                                     subprocess):
     out = _do_title_lookups([])
     assert out == {}
-    _get_fields_from_title.assert_not_called()
+    _fields_from_title.assert_not_called()
 
 
 @patch('op_env.op._op_list_items', autospec=op_env.op._op_list_items)
 @patch('op_env.op._op_consolidated_fields', autospec=op_env.op._op_consolidated_fields)
-@patch('op_env.op._get_fields_from_list_output', autospec=op_env.op._get_fields_from_list_output)
+@patch('op_env.op._fields_from_list_output', autospec=op_env.op._fields_from_list_output)
 @patch('op_env.op._op_pluck_correct_field', autospec=op_env.op._op_pluck_correct_field)
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_process_args_shows_json_with_simple_env(stdout_stringio,
