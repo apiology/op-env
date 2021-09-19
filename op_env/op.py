@@ -1,7 +1,7 @@
 from collections import OrderedDict
 import json
 import subprocess
-from typing import Any, Collection, Dict, List, Mapping, NewType, Sequence, Set, TypeVar
+from typing import Collection, Dict, List, Mapping, NewType, Sequence, Set, TypeVar
 
 from typing_extensions import TypedDict
 
@@ -17,9 +17,10 @@ class OpListItemsEntry(TypedDict, total=False):
     overview: OpListItemsEntryOverview
 
 
-# 'op list items' output comes as a JSON list of items that matched
-# the query.
-OpListItemsOpaqueOutput = NewType('OpListItemsOpaqueOutput', List[Any])
+# Data in the format of the output of 'op list items', but guaranteed
+# to come in order of the tags provided
+OpListItemsOutputOrderedByEnvVarName = NewType('OpListItemsOutputOrderedByEnvVarName',
+                                               List[OpListItemsEntry])
 
 FieldName = NewType('FieldName', str)
 
@@ -46,13 +47,17 @@ class InvalidTagOPLookupError(OPLookupError):
     pass
 
 
-def _op_list_items(env_var_names: List[EnvVarName]) -> OpListItemsOpaqueOutput:
+def _op_list_items(env_var_names: List[EnvVarName]) -> OpListItemsOutputOrderedByEnvVarName:
     list_command = ['op', 'list', 'items', '--tags',
                     ','.join(env_var_names)]
     list_items_json_docs_bytes = subprocess.check_output(list_command)
     # list_items_json_docs_str = list_items_json_docs_bytes.decode('utf-8')
     list_items_data: List[OpListItemsEntry] = json.loads(list_items_json_docs_bytes)
     by_env_var_name: Dict[EnvVarName, OpListItemsEntry] = {}
+
+    #
+    # Ensure we have at most one item per env var name
+    #
     for entry in list_items_data:
         for env_var_name in entry['overview']['tags']:
             if env_var_name in by_env_var_name:
@@ -61,15 +66,22 @@ def _op_list_items(env_var_names: List[EnvVarName]) -> OpListItemsOpaqueOutput:
             else:
                 by_env_var_name[env_var_name] = entry
     ordered_list_items_data = []
+    #
+    # Ensure we have at least one item per env var name
+    #
     for env_var_name in env_var_names:
         if env_var_name not in by_env_var_name:
             raise NoEntriesOPLookupError(f"No 1Password entries with tag {env_var_name} found")
         else:
             ordered_list_items_data.append(by_env_var_name[env_var_name])
-    return OpListItemsOpaqueOutput(ordered_list_items_data)
+    #
+    # With exactly one item per env var name, we know this is ordered
+    # by the env var name.
+    #
+    return OpListItemsOutputOrderedByEnvVarName(ordered_list_items_data)
 
 
-def _get_fields_from_list_output(list_items_output: OpListItemsOpaqueOutput,
+def _get_fields_from_list_output(list_items_output: OpListItemsOutputOrderedByEnvVarName,
                                  env_var_names: Collection[EnvVarName],
                                  all_fields_to_seek: Collection[FieldName]) ->\
                                  Dict[EnvVarName, Dict[FieldName, FieldValue]]:
@@ -92,6 +104,9 @@ def _get_fields_from_list_output(list_items_output: OpListItemsOpaqueOutput,
         in field_values_json_docs_str.split('\n')
         if field_values_json != ''
     ]
+    #
+    # Organize the fields found based on what the original tags were
+    #
     return {
         env_var_name: field_values
         for (env_var_name, field_values)
@@ -170,9 +185,10 @@ def _do_env_lookups(env_var_names: List[EnvVarName]) -> Dict[EnvVarName, FieldVa
     _validate_env_var_names(env_var_names)
     list_items_output = _op_list_items(env_var_names)
     all_fields_to_seek = _op_consolidated_fields(env_var_names)
-    field_values_for_envvars = _get_fields_from_list_output(list_items_output,
-                                                            env_var_names,
-                                                            all_fields_to_seek)
+    field_values_for_envvars: Dict[EnvVarName, Dict[FieldName, FieldValue]] = \
+        _get_fields_from_list_output(list_items_output,
+                                     env_var_names,
+                                     all_fields_to_seek)
     return {
         env_var_name: _op_pluck_correct_field(env_var_name, field_values_for_envvars[env_var_name])
         for env_var_name in field_values_for_envvars
