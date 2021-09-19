@@ -114,6 +114,10 @@ def _get_fields_from_list_output(list_items_output: OpListItemsOutputOrderedByEn
     }
 
 
+def _get_fields_from_title(title: Title) -> Dict[EnvVarName, FieldValue]:
+    raise NotImplementedError('Implement _op_env_var_names_from_title')
+
+
 def _last_underscored_component_lowercased(env_var_name: EnvVarName) -> FieldName:
     components = env_var_name.split('_')
     return FieldName(components[-1].lower())
@@ -195,14 +199,12 @@ def _do_env_lookups(env_var_names: List[EnvVarName]) -> Dict[EnvVarName, FieldVa
     }
 
 
-def _env_var_names_from_item(title: Title) -> List[EnvVarName]:
-    raise NotImplementedError('Teach me how to look up tags')
-
-
 def _do_title_lookups(titles: List[Title]) -> Mapping[EnvVarName, FieldValue]:
-    if len(titles) != 0:
-        raise NotImplementedError('Teach me to handle titles')
-    return {}
+    title_lookups: Dict[EnvVarName, FieldValue] = {}
+    for title in titles:
+        fields_by_env_name: Dict[EnvVarName, FieldValue] = _get_fields_from_title(title)
+        title_lookups.update(fields_by_env_name)
+    return title_lookups
 
 
 def do_lookups(env_var_names: List[EnvVarName],
