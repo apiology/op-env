@@ -4,6 +4,7 @@
 
 import argparse
 import io
+import json
 import os
 import subprocess
 import sys
@@ -20,6 +21,7 @@ from op_env._cli import Arguments, main, parse_argv, process_args
 from op_env.op import (
     _do_env_lookups,
     _do_title_lookups,
+    _fields_from_title,
     _op_fields_to_try,
     _op_pluck_correct_field,
     EnvVarName,
@@ -109,6 +111,42 @@ def two_item_text_file():
             text_file.write("\n")
         text_file.flush()
         yield text_file.name
+
+
+@patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
+def test_fields_from_title(subprocess):
+    output = {
+        'overview': {
+            'tags': [
+                'A1', 'B1'
+            ]
+        },
+        'details': {
+            'fields': [
+                {
+                    'name': 'a1',
+                    'value': 'a1val'
+                }
+            ],
+            'sections': [
+                {
+                },
+                {
+                    'fields': [
+                        {
+                            't': 'b1',
+                            'v': 'b1val'
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+    out = json.dumps(output)
+    subprocess.check_output.return_value = out.encode('utf-8')
+    out = _fields_from_title('title')
+    assert out == {'A1': 'a1val', 'B1': 'b1val'}
+    subprocess.check_output.assert_called_with(['op', 'get', 'item', 'title'])
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)

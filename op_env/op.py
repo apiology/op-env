@@ -115,7 +115,26 @@ def _fields_from_list_output(list_items_output: OpListItemsOutputOrderedByEnvVar
 
 
 def _fields_from_title(title: Title) -> Dict[EnvVarName, FieldValue]:
-    raise NotImplementedError('Implement _op_env_var_names_from_title')
+    get_command: List[str] = ['op', 'get', 'item', title]
+    output_bytes = subprocess.check_output(get_command)
+    output = json.loads(output_bytes)
+    overview = output['overview']
+    tags: List[EnvVarName] = overview['tags']
+    details = output['details']
+    regular_field_values: Dict[FieldName, FieldValue] = {
+        field['name']: field['value']
+        for field in details['fields']
+    }
+    section_field_values: Dict[FieldName, FieldValue] = {
+        field['t']: field['v']
+        for section in details['sections']
+        for field in section.get('fields', [])
+    }
+    field_values = {**section_field_values, **regular_field_values}
+    return {
+        tag: _op_pluck_correct_field(tag, field_values)
+        for tag in tags
+    }
 
 
 def _last_underscored_component_lowercased(env_var_name: EnvVarName) -> FieldName:
