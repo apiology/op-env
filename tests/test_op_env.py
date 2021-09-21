@@ -416,6 +416,12 @@ def test_op_do_env_lookups_multiple_entries(subprocess):
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
+def test_do_env_lookups_no_tags(subprocess):
+    assert {} == _do_env_lookups([])
+    subprocess.check_output.assert_not_called()
+
+
+@patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
 def test_do_env_lookups_no_field_value(subprocess):
     list_output_data = [
         {

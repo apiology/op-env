@@ -241,6 +241,8 @@ def _validate_env_var_names(env_var_names: List[EnvVarName]) -> None:
 
 
 def _do_env_lookups(env_var_names: List[EnvVarName]) -> Dict[EnvVarName, FieldValue]:
+    if len(env_var_names) == 0:
+        return {}
     _validate_env_var_names(env_var_names)
     list_items_output = _op_list_items(env_var_names)
     all_fields_to_seek = _op_consolidated_fields(env_var_names)
