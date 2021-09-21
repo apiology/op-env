@@ -65,7 +65,7 @@ If you'd like to PR this and add a feature to add a mapping somewhere, file an i
 
 **What if I have more than one environment?**
 
-Currently you can use the ``--name`` / ``-n`` flag to point to a particular 1Password item title.  All tags from that item will be added.
+Currently you can use the ``--title`` / ``-t`` flag to point to a particular 1Password item title.  All tags from that item will be added.
 
 In the future I could imagine having some new flag that down-selects by requiring a certain tag (e.g., ``web-server-prod``) or perhaps vault be applied to the 1Password entry to downselect to the right set of entries.  File an issue if you're interested in taking this on!
 
