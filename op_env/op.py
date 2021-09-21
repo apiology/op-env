@@ -7,24 +7,48 @@ from typing_extensions import TypedDict
 
 EnvVarName = NewType('EnvVarName', str)
 Title = NewType('Title', str)
+FieldName = NewType('FieldName', str)
+FieldValue = NewType('FieldValue', str)
 
 
-class OpListItemsEntryOverview(TypedDict, total=False):
+class OpItemOverview(TypedDict, total=False):
     tags: List[EnvVarName]
 
 
+class OpItemDetailsField(TypedDict, total=False):
+    designation: str
+    name: FieldName
+    type: str
+    value: FieldValue
+
+
+class OpItemSectionField(TypedDict, total=False):
+    t: FieldName
+    v: FieldValue
+
+
+class OpItemSection(TypedDict, total=False):
+    fields: List[OpItemSectionField]
+
+
+class OpItemDetails(TypedDict, total=False):
+    fields: List[OpItemDetailsField]
+    sections: List[OpItemSection]
+
+
 class OpListItemsEntry(TypedDict, total=False):
-    overview: OpListItemsEntryOverview
+    overview: OpItemOverview
+
+
+class OpGetItemEntry(TypedDict, total=False):
+    overview: OpItemOverview
+    details: OpItemDetails
 
 
 # Data in the format of the output of 'op list items', but guaranteed
 # to come in order of the tags provided
 OpListItemsOutputOrderedByEnvVarName = NewType('OpListItemsOutputOrderedByEnvVarName',
                                                List[OpListItemsEntry])
-
-FieldName = NewType('FieldName', str)
-
-FieldValue = NewType('FieldValue', str)
 
 
 class OPLookupError(LookupError):
@@ -94,11 +118,11 @@ def _fields_from_list_output(list_items_output: OpListItemsOutputOrderedByEnvVar
     sorted_fields_to_seek = sorted(all_fields_to_seek)
     get_command: List[str] = ['op', 'get', 'item', '-', '--fields',
                               ','.join(sorted_fields_to_seek)]
-    list_items_output_raw = json.dumps(list_items_output).encode('utf-8')
+    list_items_output_raw: bytes = json.dumps(list_items_output).encode('utf-8')
     field_values_json_docs_bytes = subprocess.check_output(get_command,
                                                            input=list_items_output_raw)
     field_values_json_docs_str = field_values_json_docs_bytes.decode('utf-8')
-    field_values_data = [
+    field_values_data: List[Dict[FieldName, FieldValue]] = [
         json.loads(field_values_json)
         for field_values_json
         in field_values_json_docs_str.split('\n')
@@ -117,7 +141,7 @@ def _fields_from_list_output(list_items_output: OpListItemsOutputOrderedByEnvVar
 def _fields_from_title(title: Title) -> Dict[EnvVarName, FieldValue]:
     get_command: List[str] = ['op', 'get', 'item', title]
     output_bytes = subprocess.check_output(get_command)
-    output = json.loads(output_bytes)
+    output: OpGetItemEntry = json.loads(output_bytes)
     overview = output['overview']
     tags: List[EnvVarName] = overview['tags']
     details = output['details']
