@@ -1,26 +1,54 @@
 from collections import OrderedDict
 import json
 import subprocess
-from typing import Any, Collection, Dict, List, NewType, Sequence, Set, TypeVar
+from typing import Collection, Dict, List, Mapping, NewType, Sequence, Set, TypeVar
 
 from typing_extensions import TypedDict
 
 EnvVarName = NewType('EnvVarName', str)
+Title = NewType('Title', str)
+FieldName = NewType('FieldName', str)
+FieldValue = NewType('FieldValue', str)
 
 
-class OpListItemsEntryOverview(TypedDict, total=False):
+class OpItemOverview(TypedDict, total=False):
     tags: List[EnvVarName]
 
 
+class OpItemDetailsField(TypedDict, total=False):
+    designation: str
+    name: FieldName
+    type: str
+    value: FieldValue
+
+
+class OpItemSectionField(TypedDict, total=False):
+    t: FieldName
+    v: FieldValue
+
+
+class OpItemSection(TypedDict, total=False):
+    fields: List[OpItemSectionField]
+
+
+class OpItemDetails(TypedDict, total=False):
+    fields: List[OpItemDetailsField]
+    sections: List[OpItemSection]
+
+
 class OpListItemsEntry(TypedDict, total=False):
-    overview: OpListItemsEntryOverview
+    overview: OpItemOverview
 
 
-OpListItemsOpaqueOutput = NewType('OpListItemsOpaqueOutput', List[Any])
+class OpGetItemEntry(TypedDict, total=False):
+    overview: OpItemOverview
+    details: OpItemDetails
 
-FieldName = NewType('FieldName', str)
 
-FieldValue = NewType('FieldValue', str)
+# Data in the format of the output of 'op list items', but guaranteed
+# to come in order of the tags provided
+OpListItemsOutputOrderedByEnvVarName = NewType('OpListItemsOutputOrderedByEnvVarName',
+                                               List[OpListItemsEntry])
 
 
 class OPLookupError(LookupError):
@@ -43,13 +71,17 @@ class InvalidTagOPLookupError(OPLookupError):
     pass
 
 
-def _op_list_items(env_var_names: List[EnvVarName]) -> OpListItemsOpaqueOutput:
+def _op_list_items(env_var_names: List[EnvVarName]) -> OpListItemsOutputOrderedByEnvVarName:
     list_command = ['op', 'list', 'items', '--tags',
                     ','.join(env_var_names)]
     list_items_json_docs_bytes = subprocess.check_output(list_command)
     # list_items_json_docs_str = list_items_json_docs_bytes.decode('utf-8')
     list_items_data: List[OpListItemsEntry] = json.loads(list_items_json_docs_bytes)
     by_env_var_name: Dict[EnvVarName, OpListItemsEntry] = {}
+
+    #
+    # Ensure we have at most one item per env var name
+    #
     for entry in list_items_data:
         for env_var_name in entry['overview']['tags']:
             if env_var_name in by_env_var_name:
@@ -58,35 +90,74 @@ def _op_list_items(env_var_names: List[EnvVarName]) -> OpListItemsOpaqueOutput:
             else:
                 by_env_var_name[env_var_name] = entry
     ordered_list_items_data = []
+    #
+    # Ensure we have at least one item per env var name
+    #
     for env_var_name in env_var_names:
         if env_var_name not in by_env_var_name:
             raise NoEntriesOPLookupError(f"No 1Password entries with tag {env_var_name} found")
         else:
             ordered_list_items_data.append(by_env_var_name[env_var_name])
-    return OpListItemsOpaqueOutput(ordered_list_items_data)
+    #
+    # With exactly one item per env var name, we know this is ordered
+    # by the env var name.
+    #
+    return OpListItemsOutputOrderedByEnvVarName(ordered_list_items_data)
 
 
-def _op_get_item(list_items_output: OpListItemsOpaqueOutput,
-                 env_var_names: Collection[EnvVarName],
-                 all_fields_to_seek: Collection[FieldName]) ->\
-                 Dict[EnvVarName, Dict[FieldName, FieldValue]]:
+def _fields_from_list_output(list_items_output: OpListItemsOutputOrderedByEnvVarName,
+                             env_var_names: Collection[EnvVarName],
+                             all_fields_to_seek: Collection[FieldName]) ->\
+                               Dict[EnvVarName, Dict[FieldName, FieldValue]]:
+    #
+    # 'op get item' with the '--fields' flag will take the JSON list
+    # of items structure from 'op list items' and return JSON objects
+    # separated by newlines of the fields requested if they exist in
+    # the item
+    #
     sorted_fields_to_seek = sorted(all_fields_to_seek)
     get_command: List[str] = ['op', 'get', 'item', '-', '--fields',
                               ','.join(sorted_fields_to_seek)]
-    list_items_output_raw = json.dumps(list_items_output).encode('utf-8')
+    list_items_output_raw: bytes = json.dumps(list_items_output).encode('utf-8')
     field_values_json_docs_bytes = subprocess.check_output(get_command,
                                                            input=list_items_output_raw)
     field_values_json_docs_str = field_values_json_docs_bytes.decode('utf-8')
-    field_values_data = [
+    field_values_data: List[Dict[FieldName, FieldValue]] = [
         json.loads(field_values_json)
         for field_values_json
         in field_values_json_docs_str.split('\n')
         if field_values_json != ''
     ]
+    #
+    # Organize the fields found based on what the original tags were
+    #
     return {
         env_var_name: field_values
         for (env_var_name, field_values)
         in zip(env_var_names, field_values_data)
+    }
+
+
+def _fields_from_title(title: Title) -> Dict[EnvVarName, FieldValue]:
+    get_command: List[str] = ['op', 'get', 'item', title]
+    output_bytes = subprocess.check_output(get_command)
+    output: OpGetItemEntry = json.loads(output_bytes)
+    overview = output['overview']
+    tags: List[EnvVarName] = overview['tags']
+    details = output['details']
+    regular_field_values: Dict[FieldName, FieldValue] = {
+        field['name']: field['value']
+        for field in details['fields']
+    }
+    section_field_values: Dict[FieldName, FieldValue] = {
+        field['t']: field['v']
+        for section in details['sections']
+        for field in section.get('fields', [])
+    }
+    field_values = {**section_field_values, **regular_field_values}
+    return {
+        tag: _op_pluck_correct_field(tag, field_values)
+        for tag in tags
     }
 
 
@@ -151,20 +222,36 @@ def _op_pluck_correct_field(env_var_name: EnvVarName,
                                     'one of these fields in 1Password.')
 
 
-def validate_env_var_names(env_var_names: List[EnvVarName]) -> None:
+def _validate_env_var_names(env_var_names: List[EnvVarName]) -> None:
     for env_var_name in env_var_names:
         if ',' in env_var_name:
             raise InvalidTagOPLookupError('1Password does not support tags with commas')
 
 
-def do_smart_lookups(env_var_names: List[EnvVarName]) -> Dict[str, str]:
-    validate_env_var_names(env_var_names)
+def _do_env_lookups(env_var_names: List[EnvVarName]) -> Dict[EnvVarName, FieldValue]:
+    _validate_env_var_names(env_var_names)
     list_items_output = _op_list_items(env_var_names)
     all_fields_to_seek = _op_consolidated_fields(env_var_names)
-    field_values_for_envvars = _op_get_item(list_items_output,
-                                            env_var_names,
-                                            all_fields_to_seek)
+    field_values_for_envvars: Dict[EnvVarName, Dict[FieldName, FieldValue]] = \
+        _fields_from_list_output(list_items_output,
+                                 env_var_names,
+                                 all_fields_to_seek)
     return {
         env_var_name: _op_pluck_correct_field(env_var_name, field_values_for_envvars[env_var_name])
         for env_var_name in field_values_for_envvars
     }
+
+
+def _do_title_lookups(titles: List[Title]) -> Mapping[EnvVarName, FieldValue]:
+    title_lookups: Dict[EnvVarName, FieldValue] = {}
+    for title in titles:
+        fields_by_env_name: Dict[EnvVarName, FieldValue] = _fields_from_title(title)
+        title_lookups.update(fields_by_env_name)
+    return title_lookups
+
+
+def do_lookups(env_var_names: List[EnvVarName],
+               titles: List[Title]) -> Dict[EnvVarName, FieldValue]:
+    env_lookups = _do_env_lookups(env_var_names)
+    title_lookups = _do_title_lookups(titles)
+    return {**env_lookups, **title_lookups}

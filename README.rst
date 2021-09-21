@@ -51,7 +51,7 @@ Heck yeah!  Just create a text file listing your environment variable
 names (one per line), point to it using
 [`env_file:`](https://docs.docker.com/compose/environment-variables/#the-env_file-configuration-option)
 in docker-compose.yml, and point to the same file with the
-`--file-environment` / `-f` flag in op_env.
+``--file-environment`` / ``-f`` flag in op_env.
 
 **Which field does op-env read?  Can I pull a username, password, servername and port from 1Password?**
 
@@ -64,6 +64,8 @@ Right now your best bet is to either duplicate the field in 1Password with the n
 If you'd like to PR this and add a feature to add a mapping somewhere, file an issue and let's talk.
 
 **What if I have more than one environment?**
+
+Currently you can use the ``--name`` / ``-n`` flag to point to a particular 1Password item title.  All tags from that item will be added.
 
 In the future I could imagine having some new flag that down-selects by requiring a certain tag (e.g., ``web-server-prod``) or perhaps vault be applied to the 1Password entry to downselect to the right set of entries.  File an issue if you're interested in taking this on!
 

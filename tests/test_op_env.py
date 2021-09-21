@@ -4,6 +4,7 @@
 
 import argparse
 import io
+import json
 import os
 import subprocess
 import sys
@@ -18,9 +19,11 @@ import yaml
 import op_env
 from op_env._cli import Arguments, main, parse_argv, process_args
 from op_env.op import (
+    _do_env_lookups,
+    _do_title_lookups,
+    _fields_from_title,
     _op_fields_to_try,
     _op_pluck_correct_field,
-    do_smart_lookups,
     EnvVarName,
     FieldName,
     FieldValue,
@@ -110,9 +113,107 @@ def two_item_text_file():
         yield text_file.name
 
 
+@patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
+def test_fields_from_title(subprocess):
+    output = {
+        'overview': {
+            'tags': [
+                'A1', 'B1'
+            ]
+        },
+        'details': {
+            'fields': [
+                {
+                    'name': 'a1',
+                    'value': 'a1val'
+                }
+            ],
+            'sections': [
+                {
+                },
+                {
+                    'fields': [
+                        {
+                            't': 'b1',
+                            'v': 'b1val'
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+    out = json.dumps(output)
+    subprocess.check_output.return_value = out.encode('utf-8')
+    out = _fields_from_title('title')
+    assert out == {'A1': 'a1val', 'B1': 'b1val'}
+    subprocess.check_output.assert_called_with(['op', 'get', 'item', 'title'])
+
+
+@patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
+@patch('op_env.op._fields_from_title', autospec=op_env.op._fields_from_title)
+def test_do_title_lookups_both_titles_not_found(_fields_from_title,
+                                                subprocess):
+    _fields_from_title.return_value = {}
+    out = _do_title_lookups(['abc', 'def'])
+    assert out == {}
+    _fields_from_title.assert_has_calls([call('abc'),
+                                         call('def')])
+
+
+@patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
+@patch('op_env.op._fields_from_title', autospec=op_env.op._fields_from_title)
+def test_do_title_lookups_one_title_not_found(_fields_from_title,
+                                              subprocess):
+    _fields_from_title.side_effect = [{'A1': 'a1val'}, {}]
+    out = _do_title_lookups(['abc', 'def'])
+    assert out == {'A1': 'a1val'}
+    _fields_from_title.assert_has_calls([call('abc'),
+                                         call('def')])
+
+
+@patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
+@patch('op_env.op._fields_from_title', autospec=op_env.op._fields_from_title)
+def test_do_title_lookups_one_title_one_env_var(_fields_from_title,
+                                                subprocess):
+    _fields_from_title.return_value = {'A1': 'a1val'}
+    out = _do_title_lookups(['abc'])
+    assert out == {'A1': 'a1val'}
+    _fields_from_title.assert_called_once_with('abc')
+
+
+@patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
+@patch('op_env.op._fields_from_title', autospec=op_env.op._fields_from_title)
+def test_do_title_lookups_two_titles_no_env_vars(_fields_from_title,
+                                                 subprocess):
+    _fields_from_title.return_value = {}
+    out = _do_title_lookups(['abc', 'def'])
+    assert out == {}
+    _fields_from_title.assert_has_calls([call('abc'),
+                                         call('def')])
+
+
+@patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
+@patch('op_env.op._fields_from_title', autospec=op_env.op._fields_from_title)
+def test_do_title_lookups_one_title_returns_no_env_vars(_fields_from_title,
+                                                        subprocess):
+    _fields_from_title.return_value = {}
+    out = _do_title_lookups(['abc'])
+    assert out == {}
+    _fields_from_title.assert_called_once_with('abc')
+
+
+@patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
+@patch('op_env.op._fields_from_title', autospec=op_env.op._fields_from_title)
+def test_do_title_lookups_no_titles(_fields_from_title,
+                                    subprocess):
+    out = _do_title_lookups([])
+    assert out == {}
+    _fields_from_title.assert_not_called()
+
+
 @patch('op_env.op._op_list_items', autospec=op_env.op._op_list_items)
 @patch('op_env.op._op_consolidated_fields', autospec=op_env.op._op_consolidated_fields)
-@patch('op_env.op._op_get_item', autospec=op_env.op._op_get_item)
+@patch('op_env.op._fields_from_list_output', autospec=op_env.op._fields_from_list_output)
 @patch('op_env.op._op_pluck_correct_field', autospec=op_env.op._op_pluck_correct_field)
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_process_args_shows_json_with_simple_env(stdout_stringio,
@@ -132,6 +233,7 @@ def test_process_args_shows_json_with_simple_env(stdout_stringio,
     args: Arguments = {
         'operation': 'json',
         'environment': env_var_names,
+        'title': [],
         'command': []
     }
     op_pluck_correct_field.return_value = '1'
@@ -146,56 +248,56 @@ def test_process_args_shows_json_with_simple_env(stdout_stringio,
 
 
 @patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True)
-@patch('op_env._cli.do_smart_lookups', autospec=op_env._cli.do_smart_lookups)
+@patch('op_env._cli.do_lookups', autospec=op_env._cli.do_lookups)
 @patch('op_env._cli.subprocess', autospec=op_env._cli.subprocess)
 def test_process_args_runs_simple_command_with_simple_env(subprocess,
-                                                          do_smart_lookups):
+                                                          do_lookups):
     command = ['env']
     args = {'operation': 'run', 'command': command,
-            'environment': ['a']}
-    do_smart_lookups.return_value = {'a': '1'}
+            'environment': ['a'], 'title': []}
+    do_lookups.return_value = {'a': '1'}
     process_args(args)
-    do_smart_lookups.assert_called_with(['a'])
+    do_lookups.assert_called_with(['a'], [])
     subprocess.check_call.assert_called_with(command,
                                              env={'a': '1',
                                                   'ORIGINAL_ENV': 'TRUE'})
 
 
 @patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True)
-@patch('op_env._cli.do_smart_lookups', autospec=op_env._cli.do_smart_lookups)
+@patch('op_env._cli.do_lookups', autospec=op_env._cli.do_lookups)
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_process_args_shows_env_with_variables_needing_escape(stdout_stringio,
-                                                              do_smart_lookups):
-    args = {'operation': 'sh', 'environment': ['a', 'c']}
-    do_smart_lookups.return_value = {'a': "'", 'c': 'd'}
+                                                              do_lookups):
+    args = {'operation': 'sh', 'environment': ['a', 'c'], 'title': []}
+    do_lookups.return_value = {'a': "'", 'c': 'd'}
     process_args(args)
     assert stdout_stringio.getvalue() == 'a=\'\'"\'"\'\'; export a\nc=d; export c\n'
 
 
 @patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True)
-@patch('op_env._cli.do_smart_lookups', autospec=op_env._cli.do_smart_lookups)
+@patch('op_env._cli.do_lookups', autospec=op_env._cli.do_lookups)
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_process_args_shows_env_with_multiple_variables(stdout_stringio,
-                                                        do_smart_lookups):
+                                                        do_lookups):
     def fake_op_smart_lookup(k):
         return {
             'a': 'b',
             'c': 'd',
          }[k]
 
-    do_smart_lookups.return_value = {'a': 'b', 'c': 'd'}
-    args = {'operation': 'sh', 'environment': ['a', 'c']}
+    do_lookups.return_value = {'a': 'b', 'c': 'd'}
+    args = {'operation': 'sh', 'environment': ['a', 'c'], 'title': []}
     process_args(args)
     assert stdout_stringio.getvalue() == 'a=b; export a\nc=d; export c\n'
 
 
 @patch.dict(os.environ, {'ORIGINAL_ENV': 'TRUE'}, clear=True)
-@patch('op_env._cli.do_smart_lookups', autospec=op_env._cli.do_smart_lookups)
+@patch('op_env._cli.do_lookups', autospec=op_env._cli.do_lookups)
 @patch('sys.stdout', new_callable=io.StringIO)
 def test_process_args_shows_env_with_simple_env(stdout_stringio,
-                                                do_smart_lookups):
-    do_smart_lookups.return_value = {'a': 'b'}
-    args = {'operation': 'sh', 'environment': ['a']}
+                                                do_lookups):
+    do_lookups.return_value = {'a': 'b'}
+    args = {'operation': 'sh', 'environment': ['a'], 'title': []}
     process_args(args)
     assert stdout_stringio.getvalue() == 'a=b; export a\n'
 
@@ -206,7 +308,7 @@ def test_process_args_shows_env_with_simple_env(stdout_stringio,
 def test_process_args_runs_simple_command(subprocess):
     command = ['env']
     args = {'operation': 'run', 'command': command,
-            'environment': []}
+            'environment': [], 'title': []}
     process_args(args)
     subprocess.check_call.assert_called_with(command, env={
         'ORIGINAL_ENV': 'TRUE',
@@ -251,7 +353,7 @@ def test_fields_to_try_simple(subprocess):
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_op_do_smart_lookups_multiple_entries(subprocess):
+def test_op_do_env_lookups_multiple_entries(subprocess):
     list_output = \
         b'[{"overview":{"tags":["ANY_TEST_VALUE"]}},' \
         b'{"overview": {"tags": ["ANOTHER_TEST_VALUE"]}}]'
@@ -266,7 +368,7 @@ def test_op_do_smart_lookups_multiple_entries(subprocess):
         list_output,
         get_output,
     ]
-    out = do_smart_lookups(['ANY_TEST_VALUE', 'ANOTHER_TEST_VALUE'])
+    out = _do_env_lookups(['ANY_TEST_VALUE', 'ANOTHER_TEST_VALUE'])
     subprocess.check_output.\
         assert_has_calls([call(['op', 'list', 'items', '--tags',
                                 'ANY_TEST_VALUE,ANOTHER_TEST_VALUE']),
@@ -280,7 +382,7 @@ def test_op_do_smart_lookups_multiple_entries(subprocess):
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_do_smart_lookups_no_field_value(subprocess):
+def test_do_env_lookups_no_field_value(subprocess):
     list_output = b'[{"overview":{"tags":["ANY_TEST_VALUE"]}}]'
     post_processed_list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
     get_output = b'{"password":""}\n'
@@ -293,7 +395,7 @@ def test_do_smart_lookups_no_field_value(subprocess):
                               'has no value for the fields tried: '
                               'any_test_value, value, password.  '
                               'Please populate one of these fields in 1Password.')):
-        do_smart_lookups(['ANY_TEST_VALUE'])
+        _do_env_lookups(['ANY_TEST_VALUE'])
     subprocess.check_output.\
         assert_has_calls([call(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE']),
                           call(['op', 'get', 'item', '-', '--fields',
@@ -302,30 +404,30 @@ def test_do_smart_lookups_no_field_value(subprocess):
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_do_smart_lookups_too_few_entries(subprocess):
+def test_do_env_lookups_too_few_entries(subprocess):
     list_output = b"[]"
     subprocess.check_output.return_value = list_output
     with pytest.raises(NoEntriesOPLookupError,
                        match='No 1Password entries with tag ANY_TEST_VALUE found'):
-        do_smart_lookups(['ANY_TEST_VALUE'])
+        _do_env_lookups(['ANY_TEST_VALUE'])
     subprocess.check_output.\
         assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'])
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_do_smart_lookups_too_many_entries(subprocess):
+def test_do_env_lookups_too_many_entries(subprocess):
     list_output = \
         b'[{"overview":{"tags":["ANY_TEST_VALUE"]}},{"overview":{"tags":["ANY_TEST_VALUE"]}}]'
     subprocess.check_output.return_value = list_output
     with pytest.raises(TooManyEntriesOPLookupError,
                        match='Too many 1Password entries with tag ANY_TEST_VALUE'):
-        do_smart_lookups(['ANY_TEST_VALUE'])
+        _do_env_lookups(['ANY_TEST_VALUE'])
     subprocess.check_output.\
         assert_called_with(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE'])
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_op_do_smart_lookups_comma_in_env(subprocess):
+def test_op_do_env_lookups_comma_in_env(subprocess):
     list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
     get_output = b'{"any_test_value":"","password":"get_results","value":""}\n'
     subprocess.check_output.side_effect = [
@@ -334,19 +436,19 @@ def test_op_do_smart_lookups_comma_in_env(subprocess):
     ]
     with pytest.raises(InvalidTagOPLookupError,
                        match='1Password does not support tags with commas'):
-        do_smart_lookups(['ENV_WITH_,_IN_IT'])
+        _do_env_lookups(['ENV_WITH_,_IN_IT'])
     subprocess.check_output.assert_not_called()
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_op_do_smart_lookups_one_var(subprocess):
+def test_op_do_env_lookups_one_var(subprocess):
     list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
     get_output = b'{"any_test_value":"","password":"get_results","value":""}\n'
     subprocess.check_output.side_effect = [
         list_output,
         get_output,
     ]
-    out = do_smart_lookups(['ANY_TEST_VALUE'])
+    out = _do_env_lookups(['ANY_TEST_VALUE'])
     subprocess.check_output.\
         assert_has_calls([call(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE']),
                           call(['op', 'get', 'item', '-', '--fields',
@@ -405,7 +507,35 @@ def test_parse_args_json_operation_no_env_variables():
     argv = ['op-env', 'json']
     args = parse_argv(argv)
     assert args == {'environment': [],
+                    'title': [],
                     'operation': 'json'}
+
+
+def test_parse_args_run_operation_with_long_name_specified():
+    argv = ['op-env', 'run', '--title', 'foo:bar', 'mycmd']
+    args = parse_argv(argv)
+    assert args == {'command': ['mycmd'],
+                    'environment': [],
+                    'title': ['foo:bar'],
+                    'operation': 'run'}
+
+
+def test_parse_args_run_operation_with_multiple_name_specified():
+    argv = ['op-env', 'run', '-t', 'foo: bar', '-t' 'bing: baz', 'mycmd']
+    args = parse_argv(argv)
+    assert args == {'command': ['mycmd'],
+                    'title': ['foo: bar', 'bing: baz'],
+                    'environment': [],
+                    'operation': 'run'}
+
+
+def test_parse_args_run_operation_with_name_specified():
+    argv = ['op-env', 'run', '-t', 'foo: bar', 'mycmd']
+    args = parse_argv(argv)
+    assert args == {'command': ['mycmd'],
+                    'title': ['foo: bar'],
+                    'environment': [],
+                    'operation': 'run'}
 
 
 def test_parse_args_run_operation_with_long_env_variables():
@@ -413,6 +543,7 @@ def test_parse_args_run_operation_with_long_env_variables():
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
                     'environment': ['DUMMY', 'DUMMY2'],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -421,6 +552,7 @@ def test_parse_args_run_operation_no_env_variables():
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
                     'environment': [],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -429,6 +561,7 @@ def test_parse_args_run_operation_with_multiple_environment_arguments():
     args = parse_argv(argv)
     assert args == {'command': ['mycmd'],
                     'environment': ['DUMMY', 'DUMMY2'],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -437,6 +570,7 @@ def test_parse_args_run_operation_with_environment_arguments():
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['DUMMY'],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -448,6 +582,7 @@ def test_parse_args_run_operation_with_multiple_yaml_and_environment_arguments(o
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['VAR_1', 'VAR0', 'VAR1', 'VAR2', 'VARA'],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -456,6 +591,7 @@ def test_parse_args_run_operation_with_yaml_arguments_and_environment_arguments(
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['VAR0', 'VAR1', 'VAR2'],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -471,6 +607,7 @@ def test_parse_args_run_operation_with_yaml_arguments_and_text_environment_argum
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['VAR0', 'VAR1', 'VAR2', 'TVAR1', 'TVAR2'],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -479,6 +616,7 @@ def test_parse_args_run_operation_with_text_arguments_and_environment_arguments(
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['VAR0', 'TVAR1', 'TVAR2'],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -518,6 +656,7 @@ def test_parse_args_run_operation_with_empty_file_yaml_argument(empty_file):
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': [],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -526,6 +665,7 @@ def test_parse_args_run_operation_with_empty_file_text_argument(empty_file):
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': [],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -534,6 +674,7 @@ def test_parse_args_run_operation_with_text_argument(two_item_text_file):
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['TVAR1', 'TVAR2'],
+                    'title': [],
                     'operation': 'run'}
 
 
@@ -542,19 +683,20 @@ def test_parse_args_run_operation_with_yaml_argument(two_item_yaml_file):
     args = parse_argv(argv)
     assert args == {'command': ['mycmd', '1', '2', '3'],
                     'environment': ['VAR1', 'VAR2'],
+                    'title': [],
                     'operation': 'run'}
 
 
 def test_parse_args_run_simple():
     argv = ['op-env', 'run', '-e', 'DUMMY', 'mycmd']
     args = parse_argv(argv)
-    assert args == {'command': ['mycmd'], 'environment': ['DUMMY'], 'operation': 'run'}
+    assert args == {'command': ['mycmd'], 'environment': ['DUMMY'], 'operation': 'run', 'title': []}
 
 
 def test_parse_args_sh_simple():
     argv = ['op-env', 'sh', '-e', 'DUMMY']
     args = parse_argv(argv)
-    assert args == {'environment': ['DUMMY'], 'operation': 'sh'}
+    assert args == {'environment': ['DUMMY'], 'operation': 'sh', 'title': []}
 
 
 @pytest.mark.skip(reason="need to mock op binary in test PATH")
@@ -571,7 +713,7 @@ def test_cli_help_run():
     env.update(os.environ)
     env.update(request_long_lines)
 
-    expected_help = """usage: op-env run [-h] [--environment ENVVAR] [--yaml-environment YAMLENV] \
+    expected_help = """usage: op-env run [-h] [--title TITLE] [--environment ENVVAR] [--yaml-environment YAMLENV] \
 [--file-environment FILEENV] command [command ...]
 
 Run the specified command with the given environment variables
@@ -581,6 +723,9 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
+  --title TITLE, -t TITLE
+                        title of 1Password item from which all tagged environment variable names \
+will be set
   --environment ENVVAR, -e ENVVAR
                         environment variable name to set, based on item with same tag in 1Password
   --yaml-environment YAMLENV, -y YAMLENV
@@ -602,13 +747,16 @@ def test_cli_help_json():
     env = {}
     env.update(os.environ)
     env.update(request_long_lines)
-    expected_help = """usage: op-env json [-h] [--environment ENVVAR] [--yaml-environment YAMLENV] \
+    expected_help = """usage: op-env json [-h] [--title TITLE] [--environment ENVVAR] [--yaml-environment YAMLENV] \
 [--file-environment FILEENV]
 
 Produce simple JSON on stdout mapping requested env variables to values
 
 options:
   -h, --help            show this help message and exit
+  --title TITLE, -t TITLE
+                        title of 1Password item from which all tagged environment variable names \
+will be set
   --environment ENVVAR, -e ENVVAR
                         environment variable name to set, based on item with same tag in 1Password
   --yaml-environment YAMLENV, -y YAMLENV
@@ -630,13 +778,16 @@ def test_cli_help_sh():
     env = {}
     env.update(os.environ)
     env.update(request_long_lines)
-    expected_help = """usage: op-env sh [-h] [--environment ENVVAR] [--yaml-environment YAMLENV] \
+    expected_help = """usage: op-env sh [-h] [--title TITLE] [--environment ENVVAR] [--yaml-environment YAMLENV] \
 [--file-environment FILEENV]
 
 Produce commands on stdout that can be 'eval'ed to set variables in current shell
 
 options:
   -h, --help            show this help message and exit
+  --title TITLE, -t TITLE
+                        title of 1Password item from which all tagged environment variable names \
+will be set
   --environment ENVVAR, -e ENVVAR
                         environment variable name to set, based on item with same tag in 1Password
   --yaml-environment YAMLENV, -y YAMLENV
