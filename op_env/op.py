@@ -3,7 +3,7 @@ import json
 import subprocess
 from typing import Collection, Dict, List, Mapping, NewType, Sequence, Set, TypeVar
 
-from typing_extensions import TypedDict
+from pydantic import BaseModel
 
 EnvVarName = NewType('EnvVarName', str)
 Title = NewType('Title', str)
@@ -11,36 +11,43 @@ FieldName = NewType('FieldName', str)
 FieldValue = NewType('FieldValue', str)
 
 
-class OpItemOverview(TypedDict, total=False):
+class OpItemOverview(BaseModel):
     tags: List[EnvVarName]
 
 
-class OpItemDetailsField(TypedDict, total=False):
+class OpItemDetailsField(BaseModel):
     designation: str
     name: FieldName
     type: str
     value: FieldValue
 
 
-class OpItemSectionField(TypedDict, total=False):
+class OpItemSectionField(BaseModel):
     t: FieldName
     v: FieldValue
 
 
-class OpItemSection(TypedDict, total=False):
-    fields: List[OpItemSectionField]
+class OpItemSection(BaseModel):
+    fields: List[OpItemSectionField] = []
 
 
-class OpItemDetails(TypedDict, total=False):
+class OpItemDetails(BaseModel):
     fields: List[OpItemDetailsField]
     sections: List[OpItemSection]
 
 
-class OpListItemsEntry(TypedDict, total=False):
+class OpListItemsEntry(BaseModel):
     overview: OpItemOverview
 
+    class Config:
+        # We'll be parsing this and then feeding it back into op, so
+        # let's keep all of the keys, not just the ones we care to
+        # view/manipulate.  In particular, I know the the uuid key is
+        # required for 'op get item'.
+        extra = 'allow'
 
-class OpGetItemEntry(TypedDict, total=False):
+
+class OpGetItemEntry(BaseModel):
     overview: OpItemOverview
     details: OpItemDetails
 
@@ -76,14 +83,17 @@ def _op_list_items(env_var_names: List[EnvVarName]) -> OpListItemsOutputOrderedB
                     ','.join(env_var_names)]
     list_items_json_docs_bytes = subprocess.check_output(list_command)
     # list_items_json_docs_str = list_items_json_docs_bytes.decode('utf-8')
-    list_items_data: List[OpListItemsEntry] = json.loads(list_items_json_docs_bytes)
+    list_items_data = [
+        OpListItemsEntry(**item)
+        for item in json.loads(list_items_json_docs_bytes)
+    ]
     by_env_var_name: Dict[EnvVarName, OpListItemsEntry] = {}
 
     #
     # Ensure we have at most one item per env var name
     #
     for entry in list_items_data:
-        for env_var_name in entry['overview']['tags']:
+        for env_var_name in entry.overview.tags:
             if env_var_name in by_env_var_name:
                 raise TooManyEntriesOPLookupError("Too many 1Password entries "
                                                   f"with tag {env_var_name} found")
@@ -118,7 +128,9 @@ def _fields_from_list_output(list_items_output: OpListItemsOutputOrderedByEnvVar
     sorted_fields_to_seek = sorted(all_fields_to_seek)
     get_command: List[str] = ['op', 'get', 'item', '-', '--fields',
                               ','.join(sorted_fields_to_seek)]
-    list_items_output_raw: bytes = json.dumps(list_items_output).encode('utf-8')
+    list_items_output_raw: bytes = json.dumps([
+        item.dict() for item in list_items_output
+    ]).encode('utf-8')
     field_values_json_docs_bytes = subprocess.check_output(get_command,
                                                            input=list_items_output_raw)
     field_values_json_docs_str = field_values_json_docs_bytes.decode('utf-8')
@@ -141,18 +153,18 @@ def _fields_from_list_output(list_items_output: OpListItemsOutputOrderedByEnvVar
 def _fields_from_title(title: Title) -> Dict[EnvVarName, FieldValue]:
     get_command: List[str] = ['op', 'get', 'item', title]
     output_bytes = subprocess.check_output(get_command)
-    output: OpGetItemEntry = json.loads(output_bytes)
-    overview = output['overview']
-    tags: List[EnvVarName] = overview['tags']
-    details = output['details']
+    output = OpGetItemEntry(**json.loads(output_bytes))
+    overview = output.overview
+    tags: List[EnvVarName] = overview.tags
+    details = output.details
     regular_field_values: Dict[FieldName, FieldValue] = {
-        field['name']: field['value']
-        for field in details['fields']
+        field.name: field.value
+        for field in details.fields
     }
     section_field_values: Dict[FieldName, FieldValue] = {
-        field['t']: field['v']
-        for section in details['sections']
-        for field in section.get('fields', [])
+        field.t: field.v
+        for section in details.sections
+        for field in section.fields
     }
     field_values = {**section_field_values, **regular_field_values}
     return {

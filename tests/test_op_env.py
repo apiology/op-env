@@ -10,7 +10,7 @@ import subprocess
 import sys
 import tempfile
 from typing import Dict
-from unittest.mock import call, patch
+from unittest.mock import ANY, call, patch
 
 import pytest
 import yaml
@@ -30,6 +30,7 @@ from op_env.op import (
     InvalidTagOPLookupError,
     NoEntriesOPLookupError,
     NoFieldValueOPLookupError,
+    Title,
     TooManyEntriesOPLookupError,
 )
 
@@ -114,7 +115,7 @@ def two_item_text_file():
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
-def test_fields_from_title(subprocess):
+def test_fields_from_title(subprocess) -> None:
     output = {
         'overview': {
             'tags': [
@@ -125,7 +126,9 @@ def test_fields_from_title(subprocess):
             'fields': [
                 {
                     'name': 'a1',
-                    'value': 'a1val'
+                    'value': 'a1val',
+                    'designation': 'password',
+                    'type': 'P',
                 }
             ],
             'sections': [
@@ -135,16 +138,16 @@ def test_fields_from_title(subprocess):
                     'fields': [
                         {
                             't': 'b1',
-                            'v': 'b1val'
+                            'v': 'b1val',
                         }
                     ]
                 }
             ]
         }
     }
-    out = json.dumps(output)
-    subprocess.check_output.return_value = out.encode('utf-8')
-    out = _fields_from_title('title')
+    output_json = json.dumps(output)
+    subprocess.check_output.return_value = output_json.encode('utf-8')
+    out = _fields_from_title(Title('title'))
     assert out == {'A1': 'a1val', 'B1': 'b1val'}
     subprocess.check_output.assert_called_with(['op', 'get', 'item', 'title'])
 
@@ -354,16 +357,45 @@ def test_fields_to_try_simple(subprocess):
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
 def test_op_do_env_lookups_multiple_entries(subprocess):
-    list_output = \
-        b'[{"overview":{"tags":["ANY_TEST_VALUE"]}},' \
-        b'{"overview": {"tags": ["ANOTHER_TEST_VALUE"]}}]'
-    post_processed_list_output = \
-        b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}, ' \
-        b'{"overview": {"tags": ["ANOTHER_TEST_VALUE"]}}]'
-    get_output = \
-        b'{"any_test_value":"","another_test_value":"","password":"any","value":""}\n' \
-        b'{"any_test_value":"","another_test_value":"another",'\
-        b'"password":"get_results","value":""}'
+    list_output_data = [
+        {
+            "uuid": "dummy",
+            "trashed": "N",
+            "itemVersion": 2,
+            "vaultUuid": "dummy",
+            "overview": {
+                "tags": ["ANY_TEST_VALUE"]
+            }
+        },
+        {
+            "uuid": "dummy",
+            "trashed": "N",
+            "itemVersion": 2,
+            "vaultUuid": "dummy",
+            "overview": {
+                "tags": ["ANOTHER_TEST_VALUE"]
+            }
+        }
+    ]
+    list_output = json.dumps(list_output_data).encode('utf-8')
+    get_output_data = [
+        {
+            "any_test_value": "",
+            "another_test_value": "",
+            "password": "any",
+            "value": ""
+        },
+        {
+            "any_test_value": "",
+            "another_test_value": "another",
+            "password": "get_results",
+            "value": ""
+        }
+    ]
+    get_output = "\n".join([
+        json.dumps(get_output_item)
+        for get_output_item in get_output_data
+    ]).encode('utf-8')
     subprocess.check_output.side_effect = [
         list_output,
         get_output,
@@ -374,7 +406,9 @@ def test_op_do_env_lookups_multiple_entries(subprocess):
                                 'ANY_TEST_VALUE,ANOTHER_TEST_VALUE']),
                           call(['op', 'get', 'item', '-', '--fields',
                                 'another_test_value,any_test_value,password,value'],
-                               input=post_processed_list_output)])
+                               input=ANY)])
+    get_item_input = subprocess.check_output.mock_calls[1].kwargs['input']
+    assert json.loads(get_item_input) == list_output_data
     assert out == {
         'ANY_TEST_VALUE': 'any',
         'ANOTHER_TEST_VALUE': 'another'
@@ -383,8 +417,18 @@ def test_op_do_env_lookups_multiple_entries(subprocess):
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
 def test_do_env_lookups_no_field_value(subprocess):
-    list_output = b'[{"overview":{"tags":["ANY_TEST_VALUE"]}}]'
-    post_processed_list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
+    list_output_data = [
+        {
+            "overview": {
+                "tags": ["ANY_TEST_VALUE"]
+            },
+            "trashed": "N",
+            "vaultUuid": "dummy",
+            "itemVersion": 2,
+            "uuid": "dummy",
+        }
+    ]
+    list_output = json.dumps(list_output_data).encode('utf-8')
     get_output = b'{"password":""}\n'
     subprocess.check_output.side_effect = [
         list_output,
@@ -400,7 +444,9 @@ def test_do_env_lookups_no_field_value(subprocess):
         assert_has_calls([call(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE']),
                           call(['op', 'get', 'item', '-', '--fields',
                                 'any_test_value,password,value'],
-                               input=post_processed_list_output)])
+                               input=ANY)])
+    get_item_input = subprocess.check_output.mock_calls[1].kwargs['input']
+    assert json.loads(get_item_input) == list_output_data
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
@@ -416,8 +462,27 @@ def test_do_env_lookups_too_few_entries(subprocess):
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
 def test_do_env_lookups_too_many_entries(subprocess):
-    list_output = \
-        b'[{"overview":{"tags":["ANY_TEST_VALUE"]}},{"overview":{"tags":["ANY_TEST_VALUE"]}}]'
+    list_output_data = [
+        {
+            "uuid": "dummy",
+            "trashed": "N",
+            "itemVersion": 2,
+            "vaultUuid": "dummy",
+            "overview": {
+                "tags": ["ANY_TEST_VALUE"]
+            }
+        },
+        {
+            "uuid": "dummy",
+            "trashed": "N",
+            "itemVersion": 2,
+            "vaultUuid": "dummy",
+            "overview": {
+                "tags": ["ANY_TEST_VALUE"]
+            }
+        }
+    ]
+    list_output = json.dumps(list_output_data).encode('utf-8')
     subprocess.check_output.return_value = list_output
     with pytest.raises(TooManyEntriesOPLookupError,
                        match='Too many 1Password entries with tag ANY_TEST_VALUE'):
@@ -442,7 +507,18 @@ def test_op_do_env_lookups_comma_in_env(subprocess):
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
 def test_op_do_env_lookups_one_var(subprocess):
-    list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
+    list_output_data = [
+        {
+            "uuid": "dummy",
+            "trashed": "N",
+            "itemVersion": 2,
+            "vaultUuid": "dummy",
+            "overview": {
+                "tags": ["ANY_TEST_VALUE"]
+            }
+        }
+    ]
+    list_output = json.dumps(list_output_data).encode('utf-8')
     get_output = b'{"any_test_value":"","password":"get_results","value":""}\n'
     subprocess.check_output.side_effect = [
         list_output,
@@ -453,7 +529,9 @@ def test_op_do_env_lookups_one_var(subprocess):
         assert_has_calls([call(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE']),
                           call(['op', 'get', 'item', '-', '--fields',
                                 'any_test_value,password,value'],
-                               input=list_output)])
+                               input=ANY)])
+    get_item_input = subprocess.check_output.mock_calls[1].kwargs['input']
+    assert json.loads(get_item_input) == list_output_data
     assert out == {'ANY_TEST_VALUE': 'get_results'}
 
 
