@@ -407,7 +407,8 @@ def test_op_do_env_lookups_multiple_entries(subprocess):
                           call(['op', 'get', 'item', '-', '--fields',
                                 'another_test_value,any_test_value,password,value'],
                                input=ANY)])
-    get_item_input = subprocess.check_output.mock_calls[1].kwargs['input']
+    kwargs = subprocess.check_output.call_args[1]
+    get_item_input = kwargs['input']
     assert json.loads(get_item_input) == list_output_data
     assert out == {
         'ANY_TEST_VALUE': 'any',
@@ -451,7 +452,8 @@ def test_do_env_lookups_no_field_value(subprocess):
                           call(['op', 'get', 'item', '-', '--fields',
                                 'any_test_value,password,value'],
                                input=ANY)])
-    get_item_input = subprocess.check_output.mock_calls[1].kwargs['input']
+    kwargs = subprocess.check_output.call_args[1]
+    get_item_input = kwargs['input']
     assert json.loads(get_item_input) == list_output_data
 
 
@@ -536,7 +538,8 @@ def test_op_do_env_lookups_one_var(subprocess):
                           call(['op', 'get', 'item', '-', '--fields',
                                 'any_test_value,password,value'],
                                input=ANY)])
-    get_item_input = subprocess.check_output.mock_calls[1].kwargs['input']
+    kwargs = subprocess.check_output.call_args[1]
+    get_item_input = kwargs['input']
     assert json.loads(get_item_input) == list_output_data
     assert out == {'ANY_TEST_VALUE': 'get_results'}
 
