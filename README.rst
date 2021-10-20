@@ -55,7 +55,7 @@ in docker-compose.yml, and point to the same file with the
 
 **Which field does op-env read?  Can I pull a username, password, servername and port from 1Password?**
 
-op-env uses the name of the env variable to infer which field in the entry should be used - e.g., 'server' for ``WEB_DB_SERVER``.  It tries to handle common synonyms (more welcome in PRs!) like 'user' for 'username'.  If all else fails it'll pull the 'password' field.
+op-env uses the name of the env variable to infer which field in the entry should be used - e.g., 'server' for ``WEB_DB_SERVER``.  It tries to handle common synonyms (more welcome in PRs!) like 'user' for 'username'.  Note that it won't pull from the password field unless you give it 'PASSWORD' or 'PASSWD' or 'PASS' as the last underscored bit.
 
 **What if the env variable naming doesn't line up with the field in 1Passsword?**
 

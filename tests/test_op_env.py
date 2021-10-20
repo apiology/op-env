@@ -328,31 +328,49 @@ def test_process_args_rejects_non_run(subprocess):
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
 def test_fields_to_try_breaks_on_double_underscore_and_underscore(subprocess):
     out = _op_fields_to_try('ABC__FLOOGLE_BAR')
-    assert out == ['abc__floogle_bar', 'floogle_bar', 'bar', 'password']
+    assert out == ['abc__floogle_bar', 'floogle_bar', 'bar']
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
 def test_fields_to_try_breaks_on_double_underscore(subprocess):
     out = _op_fields_to_try('ABC__FLOOGLE')
-    assert out == ['abc__floogle', 'floogle', 'password']
+    assert out == ['abc__floogle', 'floogle']
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
 def test_fields_to_try_conversion_username(subprocess):
     out = _op_fields_to_try('ABC_USER')
-    assert out == ['abc_user', 'user', 'username', 'password']
+    assert out == ['abc_user', 'user', 'username']
+
+
+@patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
+def test_fields_to_try_multiple_words_inc_password_password(subprocess):
+    out = _op_fields_to_try('ABC_PASSWORD')
+    assert out == ['abc_password', 'password']
+
+
+@patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
+def test_fields_to_try_multiple_words_inc_password_passwd(subprocess):
+    out = _op_fields_to_try('ABC_PASSWD')
+    assert out == ['abc_passwd', 'passwd', 'password']
+
+
+@patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
+def test_fields_to_try_multiple_words_inc_password_pass(subprocess):
+    out = _op_fields_to_try('ABC_PASS')
+    assert out == ['abc_pass', 'pass', 'password']
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
 def test_fields_to_try_multiple_words(subprocess):
     out = _op_fields_to_try('ABC_FLOOGLE')
-    assert out == ['abc_floogle', 'floogle', 'password']
+    assert out == ['abc_floogle', 'floogle']
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
 def test_fields_to_try_simple(subprocess):
     out = _op_fields_to_try('ABC')
-    assert out == ['abc', 'password']
+    assert out == ['abc']
 
 
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
@@ -380,15 +398,13 @@ def test_op_do_env_lookups_multiple_entries(subprocess):
     list_output = json.dumps(list_output_data).encode('utf-8')
     get_output_data = [
         {
-            "any_test_value": "",
-            "another_test_value": "",
-            "password": "any",
+            "any_test_value": "something",
+            "another_test_value": "something else",
             "value": ""
         },
         {
             "any_test_value": "",
             "another_test_value": "another",
-            "password": "get_results",
             "value": ""
         }
     ]
@@ -405,13 +421,13 @@ def test_op_do_env_lookups_multiple_entries(subprocess):
         assert_has_calls([call(['op', 'list', 'items', '--tags',
                                 'ANY_TEST_VALUE,ANOTHER_TEST_VALUE']),
                           call(['op', 'get', 'item', '-', '--fields',
-                                'another_test_value,any_test_value,password,value'],
+                                'another_test_value,any_test_value,value'],
                                input=ANY)])
     kwargs = subprocess.check_output.call_args[1]
     get_item_input = kwargs['input']
     assert json.loads(get_item_input) == list_output_data
     assert out == {
-        'ANY_TEST_VALUE': 'any',
+        'ANY_TEST_VALUE': 'something',
         'ANOTHER_TEST_VALUE': 'another'
     }
 
@@ -444,13 +460,13 @@ def test_do_env_lookups_no_field_value(subprocess):
     with pytest.raises(NoFieldValueOPLookupError,
                        match=('1Passsword entry with tag ANY_TEST_VALUE '
                               'has no value for the fields tried: '
-                              'any_test_value, value, password.  '
+                              'any_test_value, value.  '
                               'Please populate one of these fields in 1Password.')):
         _do_env_lookups(['ANY_TEST_VALUE'])
     subprocess.check_output.\
         assert_has_calls([call(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE']),
                           call(['op', 'get', 'item', '-', '--fields',
-                                'any_test_value,password,value'],
+                                'any_test_value,value'],
                                input=ANY)])
     kwargs = subprocess.check_output.call_args[1]
     get_item_input = kwargs['input']
@@ -502,7 +518,7 @@ def test_do_env_lookups_too_many_entries(subprocess):
 @patch('op_env.op.subprocess', autospec=op_env.op.subprocess)
 def test_op_do_env_lookups_comma_in_env(subprocess):
     list_output = b'[{"overview": {"tags": ["ANY_TEST_VALUE"]}}]'
-    get_output = b'{"any_test_value":"","password":"get_results","value":""}\n'
+    get_output = b'{"any_test_value":"","value":""}\n'
     subprocess.check_output.side_effect = [
         list_output,
         get_output,
@@ -527,7 +543,7 @@ def test_op_do_env_lookups_one_var(subprocess):
         }
     ]
     list_output = json.dumps(list_output_data).encode('utf-8')
-    get_output = b'{"any_test_value":"","password":"get_results","value":""}\n'
+    get_output = b'{"any_test_value":"v1","value":""}\n'
     subprocess.check_output.side_effect = [
         list_output,
         get_output,
@@ -536,12 +552,12 @@ def test_op_do_env_lookups_one_var(subprocess):
     subprocess.check_output.\
         assert_has_calls([call(['op', 'list', 'items', '--tags', 'ANY_TEST_VALUE']),
                           call(['op', 'get', 'item', '-', '--fields',
-                                'any_test_value,password,value'],
+                                'any_test_value,value'],
                                input=ANY)])
     kwargs = subprocess.check_output.call_args[1]
     get_item_input = kwargs['input']
     assert json.loads(get_item_input) == list_output_data
-    assert out == {'ANY_TEST_VALUE': 'get_results'}
+    assert out == {'ANY_TEST_VALUE': 'v1'}
 
 
 @patch('op_env.op._op_fields_to_try', autospec=_op_fields_to_try)
