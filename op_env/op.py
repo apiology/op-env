@@ -199,6 +199,10 @@ def _uniqify(fields: Sequence[T]) -> List[T]:
 def _aliases(fields: List[FieldName]) -> List[FieldName]:
     if 'user' in fields:
         return [FieldName('username')]
+    elif 'passwd' in fields:
+        return [FieldName('password')]
+    elif 'pass' in fields:
+        return [FieldName('password')]
     else:
         return []
 
@@ -217,7 +221,7 @@ def _op_fields_to_try(env_var_name: EnvVarName) -> List[FieldName]:
         _last_double_underscored_component_lowercased(env_var_name),
         _last_underscored_component_lowercased(env_var_name),
     ])
-    return candidates + _aliases(candidates) + [FieldName('password')]
+    return candidates + _aliases(candidates)
 
 
 def _op_pluck_correct_field(env_var_name: EnvVarName,
