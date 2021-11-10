@@ -49,7 +49,7 @@ Let's say you have a web server you're running locally named ``web-server``.  Le
 
 Heck yeah!  Just create a text file listing your environment variable
 names (one per line), point to it using
-[`env_file:`](https://docs.docker.com/compose/environment-variables/#the-env_file-configuration-option)
+`env_file:`_
 in docker-compose.yml, and point to the same file with the
 ``--file-environment`` / ``-f`` flag in op_env.
 
@@ -133,3 +133,4 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
 .. _`with-op`: https://github.com/apiology/with_op
 .. _`direnv`: https://direnv.net/
+.. _`env_file:`: https://docs.docker.com/compose/environment-variables/#the-env_file-configuration-option
