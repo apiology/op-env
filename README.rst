@@ -62,7 +62,6 @@ You read my mind!  You want to use a tool called `direnv`_ which handles the loa
 
    eval "$(with-op op-env sh -e WEB_DB_SERVER -e WEB_DB_PORT -e WEB_DB_USERNAME -e WEB_DB_PASSWORD)"
 
-
 **Which field does op-env read?  Can I pull a username, password, servername and port from 1Password?**
 
 op-env uses the name of the env variable to infer which field in the entry should be used - e.g., 'server' for ``WEB_DB_SERVER``.  It tries to handle common synonyms (more welcome in PRs!) like 'user' for 'username'.  Note that it won't pull from the password field unless you give it 'PASSWORD' or 'PASSWD' or 'PASS' as the last underscored bit.
