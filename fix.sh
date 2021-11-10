@@ -7,7 +7,7 @@ apt_upgraded=0
 update_apt() {
   if [ "${apt_upgraded}" = 0 ]
   then
-    sudo apt-get update -y
+    sudo DEBIAN_FRONTEND=noninteractive apt-get update -y
     apt_upgraded=1
   fi
 }
@@ -127,10 +127,33 @@ ensure_bundle() {
   bundler_version=$(bundle --version | cut -d ' ' -f3)
   bundler_version_major=$(cut -d. -f1 <<< "${bundler_version}")
   bundler_version_minor=$(cut -d. -f2 <<< "${bundler_version}")
+  bundler_version_patch=$(cut -d. -f3 <<< "${bundler_version}")
   # Version 2.1 of bundler seems to have some issues with nokogiri:
   #
   # https://app.asana.com/0/1107901397356088/1199504270687298
-  if [ "${bundler_version_major}" == 2 ] && [ "${bundler_version_minor}" -lt 2 ]
+
+  # Version 2.2.22 of bundler comes with a fix to ensure the 'bundle
+  # update --conservative' flag works as expected - important when
+  # doing a 'bundle update' on a about-to-be-published gem after
+  # bumping a gem version.
+  need_better_bundler=false
+  if [ "${bundler_version_major}" -lt 2 ]
+  then
+    need_better_bundler=true
+  elif [ "${bundler_version_major}" -eq 2 ]
+  then
+    if [ "${bundler_version_minor}" -lt 2 ]
+    then
+      need_better_bundler=true
+    elif [ "${bundler_version_minor}" -eq 2 ]
+    then
+      if [ "${bundler_version_patch}" -lt 22 ]
+      then
+        need_better_bundler=true
+      fi
+    fi
+  fi
+  if [ "${need_better_bundler}" = true ]
   then
     gem install --no-document bundler
   fi
@@ -143,7 +166,13 @@ ensure_bundle() {
   # re-resolve and consider the new platform when picking gems, all
   # without needing to have a machine that matches PLATFORM handy to
   # install those platform-specific gems on.'
-  grep x86_64-darwin-20 Gemfile.lock >/dev/null 2>&1 || bundle lock --add-platform x86_64-darwin-20 x86_64-linux
+  #
+  # This affects nokogiri, which will try to reinstall itself in
+  # Docker builds where it's already installed if this is not run.
+  for platform in x86_64-darwin-20 x86_64-linux
+  do
+    grep "${platform:?}" Gemfile.lock >/dev/null 2>&1 || bundle lock --add-platform "${platform:?}"
+  done
 }
 
 set_ruby_local_version() {
@@ -214,7 +243,7 @@ install_package() {
   elif type apt-get >/dev/null 2>&1
   then
     update_apt
-    sudo apt-get install -y "${apt_package}"
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "${apt_package}"
   else
     >&2 echo "Teach me how to install packages on this plaform"
     exit 1
@@ -228,7 +257,7 @@ ensure_python_build_requirements() {
   ensure_dev_library ffi.h libffi libffi-dev
   ensure_dev_library sqlite3.h sqlite3 libsqlite3-dev
   ensure_dev_library lzma.h xz liblzma-dev
-  ensure_dev_library readline.h readline libreadline-dev
+  ensure_dev_library readline/readline.h readline libreadline-dev
 }
 
 # You can find out which feature versions are still supported / have
@@ -246,8 +275,12 @@ ensure_python_versions() {
   do
     if [ "$(uname)" == Darwin ]
     then
+      if [ -z "${HOMEBREW_OPENSSL_PREFIX:-}" ]
+      then
+        HOMEBREW_OPENSSL_PREFIX="$(brew --prefix openssl)"
+      fi
       pyenv_install() {
-        CFLAGS="-I/usr/local/opt/zlib/include -I/usr/local/opt/bzip2/include" LDFLAGS="-L/usr/local/opt/zlib/lib -L/usr/local/opt/bzip2/lib" pyenv install --skip-existing "$@"
+        CFLAGS="-I/usr/local/opt/zlib/include -I/usr/local/opt/bzip2/include -I${HOMEBREW_OPENSSL_PREFIX}/include" LDFLAGS="-L/usr/local/opt/zlib/lib -L/usr/local/opt/bzip2/lib -L${HOMEBREW_OPENSSL_PREFIX}/lib" pyenv install --skip-existing "$@"
       }
 
       major_minor="$(cut -d. -f1-2 <<<"${ver}")"
@@ -273,7 +306,7 @@ ensure_pyenv_virtualenvs() {
   pyenv local "${virtualenv_name}" ${python_versions} mylibs
 }
 
-ensure_pip() {
+ensure_pip_and_wheel() {
   # Make sure we have a pip with the 20.3 resolver, and after the
   # initial bugfix release
   major_pip_version=$(pip --version | cut -d' ' -f2 | cut -d '.' -f 1)
@@ -281,6 +314,8 @@ ensure_pip() {
   then
     pip install 'pip>=20.3.1'
   fi
+  # wheel is helpful for being able to cache long package builds
+  pip show wheel >/dev/null 2>&1 || pip install wheel
 }
 
 ensure_python_requirements_build_requirements() {
@@ -343,7 +378,7 @@ ensure_python_versions
 
 ensure_pyenv_virtualenvs
 
-ensure_pip
+ensure_pip_and_wheel
 
 ensure_python_requirements
 
