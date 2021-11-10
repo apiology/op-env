@@ -53,6 +53,15 @@ names (one per line), point to it using
 in docker-compose.yml, and point to the same file with the
 ``--file-environment`` / ``-f`` flag in op_env.
 
+
+**Can I just automatically set these environment variables when I cd into my project directory?**
+
+You read my mind!  You want to use a tool called `direnv`_ which handles the loading/unloading part.  You can then add a line like this to your ``.envrc`` file:
+
+.. code-block:: sh
+
+   eval "$(with-op op-env sh -e WEB_DB_SERVER -e WEB_DB_PORT -e WEB_DB_USERNAME -e WEB_DB_PASSWORD)"
+
 **Which field does op-env read?  Can I pull a username, password, servername and port from 1Password?**
 
 op-env uses the name of the env variable to infer which field in the entry should be used - e.g., 'server' for ``WEB_DB_SERVER``.  It tries to handle common synonyms (more welcome in PRs!) like 'user' for 'username'.  Note that it won't pull from the password field unless you give it 'PASSWORD' or 'PASSWD' or 'PASS' as the last underscored bit.
@@ -113,6 +122,7 @@ Some pointers to things that might be helpful:
 3. `op <https://support.1password.com/command-line-getting-started/>`_ is a CLI tool for interacting with 1Password.  It's pretty good, but requires you stash a temporary token in your environment.
 4. `with-op`_ helps by stashing that token in your system keychain so you don't need to create wacky shell aliases or whatever.  I wrote this.
 5. `lastpass-cli <https://github.com/lastpass/lastpass-cli>`_ is a CLI tool for interacting with LastPass.  It is cruddy and not well-maintained, but it's what's available and is the basis for LastPass support in db-facts.
+6. `direnv`_ allows you to run commands and/or set environment variables when you move into and out of a directory.  It's great!
 
 Credits
 -------
@@ -122,3 +132,4 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
 .. _`with-op`: https://github.com/apiology/with_op
+.. _`direnv`: https://direnv.net/
