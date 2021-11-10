@@ -96,7 +96,7 @@ jobs:
   build:
     working_directory: ~/op_env
     docker:
-      - image: apiology/circleci:latest
+      - image: apiology/circleci-python:latest
     steps:
       - set_up_environment
       - unless:
