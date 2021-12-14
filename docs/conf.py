@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# op_env documentation build configuration file, created by
+# op-env documentation build configuration file, created by
 # sphinx-quickstart on Fri Jun  9 13:47:02 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -102,7 +102,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'op_envdoc'
+htmlhelp_basename = 'op-envdoc'
 
 
 # -- Options for LaTeX output ------------------------------------------
@@ -129,7 +129,7 @@ latex_elements: Dict[str, str] = {
 # (source start file, target name, title, author, documentclass
 # [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'op_env.tex',
+    (master_doc, 'op-env.tex',
      'op-env Documentation',
      'Vince Broz', 'manual'),
 ]
@@ -140,7 +140,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'op_env',
+    (master_doc, 'op-env',
      'op-env Documentation',
      [author], 1)
 ]
@@ -152,10 +152,10 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'op_env',
+    (master_doc, 'op-env',
      'op-env Documentation',
      author,
-     'op_env',
+     'op-env',
      'One line description of project.',
      'Miscellaneous'),
 ]
