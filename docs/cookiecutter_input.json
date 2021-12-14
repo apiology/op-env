@@ -8,7 +8,7 @@
     "open_source_license": "MIT license",
     "project_name": "op-env",
     "project_short_description": "op-env allows you to use 1Password entries as environment variable-style secrets",
-    "project_slug": "op_env",
+    "project_slug": "op-env",
     "pypi_username": "apiology",
     "type_of_github_repo": "public",
     "version": "0.1.0"
