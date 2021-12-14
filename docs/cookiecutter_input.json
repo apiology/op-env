@@ -6,6 +6,7 @@
     "full_name": "Vince Broz",
     "github_username": "apiology",
     "open_source_license": "MIT license",
+    "package_name": "op_env",
     "project_name": "op-env",
     "project_short_description": "op-env allows you to use 1Password entries as environment variable-style secrets",
     "project_slug": "op-env",

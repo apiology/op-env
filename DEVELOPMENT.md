@@ -35,5 +35,5 @@ git push
 git push --tags
 make release
 git stash pop
-open https://pypi.org/project/op_env
+open https://pypi.org/project/op-env
 ```

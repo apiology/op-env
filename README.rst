@@ -3,11 +3,11 @@ op-env
 ======
 
 
-.. image:: https://circleci.com/gh/apiology/op_env.svg?style=svg
-    :target: https://circleci.com/gh/apiology/op_env
+.. image:: https://circleci.com/gh/apiology/op-env.svg?style=svg
+    :target: https://circleci.com/gh/apiology/op-env
 
-.. image:: https://img.shields.io/pypi/v/op_env.svg
-        :target: https://pypi.python.org/pypi/op_env
+.. image:: https://img.shields.io/pypi/v/op-env.svg
+        :target: https://pypi.python.org/pypi/op-env
 
 .. image:: https://readthedocs.org/projects/op-env/badge/?version=latest
         :target: https://op-env.readthedocs.io/en/latest/?badge=latest
