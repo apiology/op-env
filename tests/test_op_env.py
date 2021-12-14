@@ -44,7 +44,7 @@ def test_process_args(print):
 
 # @pytest.mark.skip(reason="working on main help test first")
 def test_parse_argv_run_simple():
-    argv = ['op_env', 'op1', '123']
+    argv = ['op-env', 'op1', '123']
     args = parse_argv(argv)
     assert vars(args) == {'operation': 'op1', 'arg1': 123}
 
@@ -63,7 +63,7 @@ def test_cli_op1_help():
     env = {}
     env.update(os.environ)
     env.update(request_long_lines)
-    expected_help = """usage: op_env op1 [-h] arg1
+    expected_help = """usage: op-env op1 [-h] arg1
 
 Do some kind of operation
 
@@ -77,7 +77,7 @@ options:
         # 3.10 changed the wording a bit
         expected_help = expected_help.replace('options:', 'optional arguments:')
 
-    actual_help = subprocess.check_output(['op_env', 'op1', '--help'],
+    actual_help = subprocess.check_output(['op-env', 'op1', '--help'],
                                           env=env).decode('utf-8')
     assert actual_help == expected_help
 
@@ -87,10 +87,10 @@ def test_cli_no_command():
     env = {}
     env.update(os.environ)
     env.update(request_long_lines)
-    expected_help = """usage: op_env [-h] {op1} ...
-op_env: error: Please provide a command
+    expected_help = """usage: op-env [-h] {op1} ...
+op-env: error: Please provide a command
 """
-    result = subprocess.run(['op_env'],
+    result = subprocess.run(['op-env'],
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
                             env=env)
@@ -103,7 +103,7 @@ def test_cli_help():
     env = {}
     env.update(os.environ)
     env.update(request_long_lines)
-    expected_help = """usage: op_env [-h] {op1} ...
+    expected_help = """usage: op-env [-h] {op1} ...
 
 positional arguments:
   {op1}
@@ -116,6 +116,6 @@ options:
         # 3.10 changed the wording a bit
         expected_help = expected_help.replace('options:', 'optional arguments:')
 
-    actual_help = subprocess.check_output(['op_env', '--help'],
+    actual_help = subprocess.check_output(['op-env', '--help'],
                                           env=env).decode('utf-8')
     assert actual_help == expected_help

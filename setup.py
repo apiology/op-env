@@ -115,7 +115,7 @@ setup(
     description="op-env allows you to use 1Password entries as environment variable-style secrets",  # noqa: E501
     entry_points={
         'console_scripts': [
-            'op_env=op_env.cli:main',
+            'op-env=op_env.cli:main',
         ],
     },
     cmdclass={
@@ -127,13 +127,13 @@ setup(
     long_description=readme + '\n\n' + history,
     long_description_content_type='text/x-rst',
     include_package_data=True,
-    keywords='op_env',
-    name='op_env',
+    keywords='op-env',
+    name='op-env',
     packages=find_packages(include=['op_env',
                                     'op_env.*']),
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/apiology/op_env',
+    url='https://github.com/apiology/op-env',
     version='0.1.0',
     zip_safe=False,
 )
