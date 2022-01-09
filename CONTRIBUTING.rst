@@ -42,14 +42,15 @@ coding it.
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-op-env could always use more documentation, whether as part of the
-official op-env docs, in docstrings, or even on the web in blog posts,
-articles, and such.
+op-env could always use more documentation, whether as part of
+the official op-env docs, in docstrings, or even on the web in blog posts, articles,
+and such.
 
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/apiology/op-env/issues.
+The best way to send feedback is to file an issue at
+https://github.com/apiology/op-env/issues.
 
 If you are proposing a new feature:
 
