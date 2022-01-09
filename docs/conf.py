@@ -49,7 +49,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'op-env'
-copyright = "2021, Vince Broz"
+copyright = "2022, Vince Broz"
 author = "Vince Broz"
 
 # The version info for the project you're documenting, acts as replacement
