@@ -16,6 +16,11 @@ op-env
 * Free software: MIT license
 * Documentation: https://op-env.readthedocs.io.
 
+Deprecated
+----------
+
+The 1Password CLI 2.0 release introduced a `feature`_ which makes this obsolete!  Unless you want to adopt this project and update it for the other breaking changes in that release, please consider this deprecated.
+
 
 Features
 --------
@@ -134,3 +139,4 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. _`with-op`: https://github.com/apiology/with_op
 .. _`direnv`: https://direnv.net/
 .. _`env_file:`: https://docs.docker.com/compose/environment-variables/#the-env_file-configuration-option
+.. _`feature`: https://developer.1password.com/docs/cli/authenticate-clis/
